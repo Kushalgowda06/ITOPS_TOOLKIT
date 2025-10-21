@@ -1,15 +1,20 @@
-# Use the official Vault image
-FROM hashicorp/vault:latest
+FROM alpine:3.18
 
-# Install OpenSSL
-USER root
-RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Install dependencies
+RUN apk add --no-cache openssl bash curl unzip
 
 # Set environment variables
+ENV VAULT_VERSION=1.16.1
 ENV VAULT_ADDR=https://vault.local:8200
 
+# Download and install Vault
+RUN curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o vault.zip && \
+    unzip vault.zip && \
+    mv vault /usr/local/bin/ && \
+    rm -f vault.zip
+
 # Create necessary directories
-RUN mkdir -p /opt/vault/tls /opt/vault/data
+RUN mkdir -p /opt/vault/tls /opt/vault/data /etc/vault.d
 
 # Generate self-signed TLS certificate
 RUN openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
@@ -18,10 +23,8 @@ RUN openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
   -subj "/O=MyCompany/CN=vault.local" \
   -addext "subjectAltName=DNS:vault.local,IP:0.0.0.0"
 
-# Copy Vault configuration
+# Copy Vault configuration and init script
 COPY vault.hcl /etc/vault.d/vault.hcl
-
-# Copy initialization script
 COPY init_vault.sh /usr/local/bin/init_vault.sh
 RUN chmod +x /usr/local/bin/init_vault.sh
 
