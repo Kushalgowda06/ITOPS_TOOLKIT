@@ -1,13 +1,13 @@
 #!/bin/sh
 
-export VAULT_ADDR=https://vault.local:8200
+export VAULT_ADDR=https://3.6.96.101:8200
 export VAULT_CACERT=/opt/vault/tls/tls.crt
 
 # Wait for Vault to be ready
 sleep 5
 
 # Initialize Vault if not already initialized
-if vault status | grep -q 'Initialized.*false'; then
+if vault status 2>&1 | grep -q 'Initialized.*false'; then
   echo "Initializing Vault..."
   vault operator init -key-shares=5 -key-threshold=3 -format=json > /opt/vault/init.json
 
@@ -26,4 +26,6 @@ if vault status | grep -q 'Initialized.*false'; then
   echo "Adding secrets..."
   vault kv put secret/Platform_SNOW snow_user=admin snow_password=changeme
   vault kv put secret/cfs_problem_tickets db_user=dbadmin db_password=dbpass
+else
+  echo "Vault is already initialized. Skipping initialization."
 fi
