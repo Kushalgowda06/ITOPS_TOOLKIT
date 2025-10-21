@@ -9,6 +9,7 @@ on:
 jobs:
   deploy-vault:
     runs-on: ubuntu-latest
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -42,13 +43,23 @@ jobs:
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
-        # Copy docker-compose file to EC2
+        # Copy docker-compose and Vault config files to EC2
         scp -i ec2_key.pem -o StrictHostKeyChecking=no docker-compose.yml \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
+
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/vault.hcl \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
+
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/tls \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/tls
+
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/init_vault.sh \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
 
         ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
           echo "---- Starting Vault Deployment ----"
 
+          # Install Docker if missing
           if ! command -v docker &> /dev/null; then
             echo "Installing Docker..."
             if [ -x "$(command -v yum)" ]; then
@@ -60,6 +71,7 @@ jobs:
             sudo systemctl start docker
           fi
 
+          # Install Docker Compose if missing
           if ! docker compose version &> /dev/null; then
             echo "Installing Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -68,11 +80,26 @@ jobs:
 
           cd ~/vault-deploy || mkdir -p ~/vault-deploy && cd ~/vault-deploy
 
+          # Login to ECR
           aws ecr get-login-password --region ${{ secrets.AWS_REGION_RELEASE }} | \
           docker login --username AWS --password-stdin 361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com
 
+          # Pull and start Vault container
           docker compose pull
           docker compose up -d --remove-orphans
+
+          echo "Waiting for Vault to start..."
+          sleep 10
+
+          echo "Running Vault initialization script..."
+          chmod +x init_vault.sh
+          ./init_vault.sh
+
+          echo "Checking Vault container status..."
+          docker ps
+
+          echo "Vault logs:"
+          docker logs vault
 
           echo "---- Vault Deployment Complete ----"
         EOF
