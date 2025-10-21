@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-
+  workflow_dispatch:
 
 jobs:
   deploy-vault:
@@ -30,9 +30,14 @@ jobs:
       run: |
         aws ecr get-login-password --region ${{ secrets.AWS_REGION_RELEASE }} | \
         docker login --username AWS --password-stdin 361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com
-    
-    - name: Set up Docker
+
+    - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
+      with:
+        install: true
+
+    - name: Disable BuildKit (optional fallback)
+      run: echo "DOCKER_BUILDKIT=0" >> $GITHUB_ENV
 
     - name: Verify Docker installation
       run: docker --version
