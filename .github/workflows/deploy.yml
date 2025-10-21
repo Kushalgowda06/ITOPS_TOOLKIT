@@ -37,7 +37,7 @@ jobs:
     - name: Build & Push Vault Image
       run: |
         IMAGE_URI=361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com/vault:latest
-        docker build -t vault -f ITOpsToolokit_Backend/vault_setup/Dockerfile .
+        docker build -t vault -f ITOpsToolokit_Backend/vault_setup/Dockerfile ITOpsToolokit_Backend/vault_setup
         docker tag vault:latest $IMAGE_URI
         docker push $IMAGE_URI
 
