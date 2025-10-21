@@ -1,6 +1,10 @@
 # Use the official Vault image
 FROM hashicorp/vault:latest
 
+# Install OpenSSL
+USER root
+RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+
 # Set environment variables
 ENV VAULT_ADDR=https://vault.local:8200
 
