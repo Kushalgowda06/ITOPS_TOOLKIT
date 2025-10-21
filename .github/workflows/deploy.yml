@@ -40,7 +40,7 @@ jobs:
 
     - name: Replace region variable in docker-compose.yml
       run: |
-        sed -i "s|\\${AWS_REGION_RELEASE}|${{ secrets.AWS_REGION_RELEASE }}|g" docker-compose.yml
+        sed -i "s|\${AWS_REGION_RELEASE}|${{ secrets.AWS_REGION_RELEASE }}|g" docker-compose.yml
 
     - name: Deploy Vault to EC2
       run: |
