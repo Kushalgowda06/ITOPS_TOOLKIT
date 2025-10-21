@@ -32,4 +32,4 @@ RUN chmod +x /usr/local/bin/init_vault.sh
 EXPOSE 8200
 
 # Start Vault and run init script after a short delay
-CMD ["/bin/bash", "-c", "vault server -config=/etc/vault.d/vault.hcl & sleep 10 && init_vault.sh"]
+CMD ["/bin/bash", "-c", "vault server -config=/etc/vault.d/vault.hcl & sleep 10 && /usr/local/bin/init_vault.sh && tail -f /dev/null"]
