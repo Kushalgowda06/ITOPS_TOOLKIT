@@ -30,6 +30,12 @@ jobs:
       run: |
         aws ecr get-login-password --region ${{ secrets.AWS_REGION_RELEASE }} | \
         docker login --username AWS --password-stdin 361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com
+    
+    - name: Set up Docker
+      uses: docker/setup-buildx-action@v3
+
+    - name: Verify Docker installation
+      run: docker --versio
 
     - name: Build & Push Vault Image
       run: |
