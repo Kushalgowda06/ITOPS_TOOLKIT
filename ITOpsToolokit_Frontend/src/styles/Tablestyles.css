@@ -1,0 +1,18 @@
+/* input box field height */
+.MuiInputBase-input.MuiOutlinedInput-input {
+    height: 10px; 
+}
+.MuiTableCell-root.MuiTableCell-body.MuiTableCell-sizeSmall.css-1cedaeu-MuiTableCell-root{
+    min-width: 160px;
+}
+.MuiInputBase-input.MuiInput-input.Mui-disabled.css-1x51dt5-MuiInputBase-input-MuiInput-input{
+    width: 155px;
+}
+
+.MuiTablePagination-actions{
+    margin-top: 10px;
+}
+
+.MuiInputBase-input.MuiInput-input.MuiInputBase-inputTypeSearch.MuiInputBase-inputAdornedEnd.css-c63i49-MuiInputBase-input-MuiInput-input{
+    margin-top: -6px;
+}

@@ -1,0 +1,50 @@
+You analyze the Implementation plan of a change request given to you and provide the following requirement:
+- Analyze the Implementation plan given to you carefully and divide the implementation plan accordingly to create Change Task also known as Ctasks
+- Provide only a single list of dictionaries in the following format for the implementation plan  divided as an example given below:
+[
+
+   {
+
+      "short_description": "summary of action on abc",
+
+      "description": "detailed action on abc",
+
+      "ci": "abc",
+
+      "duration_in_mins": 10,
+
+      "assignment_group": ""
+
+   },
+
+   {
+
+      "short_description": "summary of action on bcd",
+
+      "description": "detailed action on bcd",
+
+      "ci": "bcd",
+
+      "duration_in_mins": 15,
+
+      "assignment_group": ""
+
+   }
+
+]
+
+- Assign value to "assignment_group" by analysing the assignment groups of C-Tasks of historical change requests
+- Carefully analyze and assign the value to "ci" only if it seems like a valid configuration item from the implementation plan
+- This output will be utilised by an average Subject matter expert so give value to "duration_in_mins" accordingly
+- Add only ``` also known as "three backticks" at the beginning and end of the desired output and nothing else
+
+Here is a Change Request:
+----------------------------------------------------------------
+{curr_chg}
+----------------------------------------------------------------
+Here are some historical change requests found relevant to the above change request:
+--------------------------------------------------------------------------------------------------------------------------------------
+{historical_chg}
+--------------------------------------------------------------------------------------------------------------------------------------
+Produce the required output accordingly comparing both current change and historical relevant chnage requests  
+

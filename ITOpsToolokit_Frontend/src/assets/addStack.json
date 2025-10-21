@@ -1,0 +1,20 @@
+{
+    "Test": [
+        {
+            "Stack_Name": "Test",
+            "Description": "This is to create MarklogicDBCluster",
+            "ResourceGroup": "tue28rg",
+            "Location": "eastus",
+            "Virtual_Network": "tuevnet28",
+            "Subnet": "tuesubnet28",
+            "Public_ip": "tueip28",
+            "Dns": "tuedns28",
+            "Network_Security_Group": "tuensg28",
+            "Network_Interface": "tuenic28",
+            "Virtual_Machine_Name": "tuevm28",
+            "Size": "Standard_D2s_v3",
+            "Username": "Azureicmp",
+            "Password": "Qwertyuiop@123"
+        }
+    ]
+}

@@ -1,0 +1,156 @@
+// Modern Landing Page Cards - Isolated Styles
+.modern-landing-page {
+    background-color: #293243 !important;
+    color: #fff;
+    text-align: center;
+    padding: 20px;
+    padding-bottom: 7.6rem;
+}
+
+// Reference Cards Section - Top
+.modern-reference-cards-container {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 40px;
+    padding: 20px 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+}
+
+.modern-reference-card {
+    background-color: #1e2532;
+    border: 1px solid;
+    border-radius: 5px;
+    padding: 20px;
+    min-width: 180px;
+    max-width: 200px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+}
+
+.modern-reference-card-content {
+    text-align: left;
+}
+
+.modern-reference-card-title {
+    color: #ffffff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+}
+
+.modern-reference-card-count {
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+// Modern Cards Container
+.modern-card-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: nowrap;
+    margin-top: 20px;
+}
+
+// Modern Cards Styling
+.modern-card {
+    position: relative;
+    background-color: #2a3441 !important;
+    border-radius: 16px !important;
+    padding: 30px 25px !important;
+    width: 280px;
+    min-width: 250px;
+    max-width: 300px;
+    flex: 1;
+    text-align: center;
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 8px 32px !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    
+    &:hover {
+        transform: translateY(-8px);
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 16px 48px !important;
+    }
+}
+
+.modern-card-number {
+    position: absolute;
+    top: -12px;
+    left: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.modern-card-icon {
+    width: 60px;    
+    height: 60px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 20px auto 25px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, var(--icon-color-start), var(--icon-color-end));
+    
+    img {
+        width: 40px;
+        height: 40px;
+        filter: brightness(0) invert(1); // Make icons white
+        transition: transform 0.3s ease;
+    }
+    
+    &:hover img {
+        transform: scale(1.1);
+    }
+}
+
+.modern-card-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: #ffffff;
+    letter-spacing: -0.02em;
+}
+
+.modern-card-description {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    color: #a1a8b3;
+    font-weight: 400;
+}
+
+.modern-card-link {
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    transition: color 0.3s ease;
+    
+    &:hover {
+        color: #93c5fd;
+        text-decoration: none;
+    }
+} 

@@ -1,0 +1,9 @@
+[
+    {
+        "model": "gemini-1.5-flash-001",
+       	"api_type": "google",
+        "project_id": "cis-icmp-engineering-v",
+        "location": "us-east1",
+        "google_application_credentials": "config/.vai_sa.json"
+    }
+]

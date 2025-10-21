@@ -1,0 +1,14 @@
+{
+	"vault_url": "http://172.31.14.219:8200",
+        "snow_tag": "Platform_SNOW",
+        "snow_url": "https://cisicmpengineering1.service-now.com",
+        "pg_db_host": "172.31.9.30",
+        "pg_db_name": "mim_project",
+        "pg_db_port": "5432",
+        "vector_dimention": 768,
+        "similarity_threshould": 0.5,
+        "api_version": "v1",
+	"ke_category_name":"Known Error",
+	"proxy_url":""
+}
+

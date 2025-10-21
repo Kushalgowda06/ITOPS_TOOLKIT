@@ -1,0 +1,9 @@
+[
+  {
+    "model": "gpt-4o",
+    "api_type": "azure",
+    "base_url": "https://aiinfusedterraformmodel.cognitiveservices.azure.com/",
+    "api_key": "0911999a1afe4ccdaa361cb2c801ee11",
+    "api_version": "2025-01-01-preview"
+  }
+]
