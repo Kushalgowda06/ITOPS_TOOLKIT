@@ -2,16 +2,17 @@ version: '3.8'
 
 services:
   vault:
-    image: 361568250748.dkr.ecr.us-west-1.amazonaws.com/vault:latest
+    image: 361568250748.dkr.ecr.${AWS_REGION_RELEASE}.amazonaws.com/vault-service:latest
     container_name: vault
     ports:
       - "8200:8200"
+    environment:
+      VAULT_ADDR: https://vault.local:8200
+      VAULT_CACERT: /opt/vault/tls/tls.crt
     volumes:
       - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/etc/vault.d/vault.hcl
       - ./ITOpsToolokit_Backend/vault_setup/tls:/opt/vault/tls
       - ./ITOpsToolokit_Backend/vault_setup/data:/opt/vault/data
     cap_add:
       - IPC_LOCK
-    environment:
-      VAULT_ADDR: https://vault.local:8200
-      VAULT_CACERT: /opt/vault/tls/tls.crt
+``
