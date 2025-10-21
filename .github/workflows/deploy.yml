@@ -30,6 +30,7 @@ jobs:
       run: |
         aws ecr get-login-password --region ${{ secrets.AWS_REGION_RELEASE }} | \
         docker login --username AWS --password-stdin 361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com
+
     - name: Build & Push Vault Image
       run: |
         IMAGE_URI=361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com/vault:latest
@@ -60,7 +61,7 @@ jobs:
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
 
         # SSH into EC2 and deploy
-        ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << EOF
           echo "---- Starting Vault Deployment ----"
 
           # Install AWS CLI if missing
@@ -74,7 +75,7 @@ jobs:
           # Inject AWS credentials
           export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID_RELEASE }}"
           export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}"
-          export AWS_DEFAULT_REGION="ap-south-1"
+          export AWS_DEFAULT_REGION="${{ secrets.AWS_REGION_RELEASE }}"
 
           # Install Docker if missing
           if ! command -v docker &> /dev/null; then
@@ -100,8 +101,8 @@ jobs:
 
           # Login to ECR
           echo "Logging into ECR..."
-          aws ecr get-login-password --region ap-south-1 | \
-          docker login --username AWS --password-stdin 361568250748.dkr.ecr.ap-south-1.amazonaws.com
+          aws ecr get-login-password --region ${AWS_DEFAULT_REGION} | \
+          docker login --username AWS --password-stdin 361568250748.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com
 
           echo "Docker Compose file:"
           cat docker-compose.yml
