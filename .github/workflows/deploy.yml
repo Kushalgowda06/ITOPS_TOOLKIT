@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - release/*
+  workflow_dispatch:
 
 jobs:
   deploy-vault:
@@ -21,7 +21,10 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
         aws-region: ${{ secrets.AWS_REGION_RELEASE }}
 
-    - name: Ensure Vault ECR repository exists
+    - name: Ensure vault_setup/data directory exists
+      run: mkdir -p ITOpsToolokit_Backend/vault_setup/data
+
+    - name: Ensure ECR repository exists
       run: |
         aws ecr describe-repositories --repository-names vault >/dev/null 2>&1 || \
         aws ecr create-repository --repository-name vault
@@ -34,89 +37,54 @@ jobs:
     - name: Build & Push Vault Image
       run: |
         IMAGE_URI=361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com/vault:latest
-        docker build -t vault-image -f ITOpsToolokit_Backend/vault_setup/Dockerfile ITOpsToolokit_Backend/vault_setup
-        docker tag vault-image:latest $IMAGE_URI
+        docker build -t vault -f ITOpsToolokit_Backend/vault_setup/Dockerfile .
+        docker tag vault:latest $IMAGE_URI
         docker push $IMAGE_URI
-
-    - name: Replace region variable in docker-compose.yml
-      run: |
-        sed -i "s|\${AWS_REGION_RELEASE}|${{ secrets.AWS_REGION_RELEASE }}|g" docker-compose.yml
 
     - name: Deploy Vault to EC2
       run: |
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
-        # Copy files to EC2
+        # Ensure remote directory exists
+        ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} "mkdir -p ~/vault-deploy"
+
+        # Copy docker-compose.yml and vault_setup directory
         scp -i ec2_key.pem -o StrictHostKeyChecking=no docker-compose.yml \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/vault.hcl \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/tls \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/tls
-
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/init_vault.sh \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
 
         # SSH into EC2 and deploy
         ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
           echo "---- Starting Vault Deployment ----"
 
-          # Install AWS CLI if missing
+          # Install Docker if not present
+          if ! command -v docker &> /dev/null; then
+            echo "Installing Docker..."
+            sudo apt-get update -y && sudo apt-get install -y docker.io
+            sudo systemctl enable docker
+            sudo systemctl start docker
+          fi
+
+          # Install unzip and AWS CLI if not present
           if ! command -v aws &> /dev/null; then
             echo "Installing AWS CLI..."
+            sudo apt-get install -y unzip curl
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
             unzip awscliv2.zip
             sudo ./aws/install
           fi
 
-          # Install Docker if missing
-          if ! command -v docker &> /dev/null; then
-            echo "Installing Docker..."
-            if [ -x "$(command -v yum)" ]; then
-              sudo amazon-linux-extras install docker -y
-            else
-              sudo apt-get update -y && sudo apt-get install -y docker.io
-            fi
-            sudo systemctl enable docker
-            sudo systemctl start docker
-          fi
+          # Authenticate with ECR
+          aws ecr get-login-password --region ${{ secrets.AWS_REGION_RELEASE }} | \
+          docker login --username AWS --password-stdin 361568250748.dkr.ecr.${{ secrets.AWS_REGION_RELEASE }}.amazonaws.com
 
-          # Install Docker Compose if missing
-          if ! docker compose version &> /dev/null; then
-            echo "Installing Docker Compose..."
-            sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-            sudo chmod +x /usr/local/bin/docker-compose
-          fi
-
-          mkdir -p ~/vault-deploy
           cd ~/vault-deploy
 
-          # Login to ECR
-          echo "Logging into ECR..."
-          aws ecr get-login-password --region ap-south-1 | \
-          docker login --username AWS --password-stdin 361568250748.dkr.ecr.ap-south-1.amazonaws.com
-
-          echo "Docker Compose file:"
-          cat docker-compose.yml
-
-          echo "Starting Vault container..."
           docker compose pull
           docker compose up -d --remove-orphans
-
-          echo "Waiting for Vault to start..."
-          sleep 10
-
-          echo "Running Vault initialization script..."
-          chmod +x init_vault.sh
-          ./init_vault.sh
-
-          echo "Checking Vault container status..."
-          docker ps
-
-          echo "Vault logs:"
-          docker logs vault || echo "Vault container not found or failed to start."
 
           echo "---- Vault Deployment Complete ----"
         EOF
