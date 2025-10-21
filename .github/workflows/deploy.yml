@@ -53,7 +53,6 @@ jobs:
 
         scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/vault.hcl \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
-
         scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/tls \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/tls
 
@@ -63,6 +62,14 @@ jobs:
         # SSH into EC2 and deploy
         ssh -o StrictHostKeyChecking=no -i ec2_key.pem ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
           echo "---- Starting Vault Deployment ----"
+
+          # Install AWS CLI if missing
+          if ! command -v aws &> /dev/null; then
+            echo "Installing AWS CLI..."
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
+          fi
 
           # Install Docker if missing
           if ! command -v docker &> /dev/null; then
@@ -83,13 +90,18 @@ jobs:
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
-          cd ~/vault-deploy || mkdir -p ~/vault-deploy && cd ~/vault-deploy
+          mkdir -p ~/vault-deploy
+          cd ~/vault-deploy
 
-          # Login to ECR in ap-south-1
+          # Login to ECR
+          echo "Logging into ECR..."
           aws ecr get-login-password --region ap-south-1 | \
           docker login --username AWS --password-stdin 361568250748.dkr.ecr.ap-south-1.amazonaws.com
 
-          # Pull and start Vault container
+          echo "Docker Compose file:"
+          cat docker-compose.yml
+
+          echo "Starting Vault container..."
           docker compose pull
           docker compose up -d --remove-orphans
 
@@ -104,7 +116,7 @@ jobs:
           docker ps
 
           echo "Vault logs:"
-          docker logs vault
+          docker logs vault || echo "Vault container not found or failed to start."
 
           echo "---- Vault Deployment Complete ----"
         EOF
