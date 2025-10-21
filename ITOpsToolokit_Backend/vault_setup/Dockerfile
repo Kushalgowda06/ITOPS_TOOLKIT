@@ -1,7 +1,6 @@
-# Use Alpine for a lightweight base
 FROM alpine:3.18
 
-# Install required packages
+# Install dependencies
 RUN apk add --no-cache openssl bash curl unzip jq
 
 # Set Vault version and environment variables
@@ -11,7 +10,7 @@ ENV VAULT_ADDR=https://vault.local:8200
 # Download and install Vault
 RUN curl -fsSL https://releases.hashicorp.com/vault/${VAULT_VERSION}/vault_${VAULT_VERSION}_linux_amd64.zip -o vault.zip \
     && unzip vault.zip \
-    && mv vault /usr/local/bin/ \
+    && mv vault /usr/local/bin/vault \
     && rm -f vault.zip
 
 # Create necessary directories
@@ -31,5 +30,6 @@ RUN chmod +x /usr/local/bin/init_vault.sh
 
 # Expose Vault port
 EXPOSE 8200
+
 # Start Vault and run init script after a short delay
-CMD ["/bin/bash", "-c", "vault server -config=/etc/vault.d/vault.hcl & sleep 5 && init_vault.sh"]
+CMD ["/bin/bash", "-c", "vault server -config=/etc/vault.d/vault.hcl & sleep 10 && init_vault.sh"]
