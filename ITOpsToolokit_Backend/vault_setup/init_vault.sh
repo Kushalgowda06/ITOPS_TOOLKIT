@@ -1,23 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 
-export VAULT_ADDR='https://vault.local:8200'
-export VAULT_CACERT='./vault_setup/tls/tls.crt'
+# Wait for Vault to be ready
+sleep 5
 
-vault operator init -key-shares=5 -key-threshold=3 > vault_setup/init.txt
+export VAULT_ADDR=https://vault.local:8200
+export VAULT_CACERT=/opt/vault/tls/tls.crt
 
-keys=$(grep 'Unseal Key' vault_setup/init.txt | awk '{print $NF}')
-token=$(grep 'Initial Root Token' vault_setup/init.txt | awk '{print $NF}')
-
-i=0
-for key in $keys; do
-  vault operator unseal $key
-  i=$((i+1))
-  [ $i -eq 3 ] && break
-done
-
-vault login $token
-
-vault secrets enable -path=secret kv
-
-vault kv put secret/Platform_SNOW snow_user=your_user snow_password=your_pass
-vault kv put secret/cfs_problem_tickets db_user=db_user db_password=db_pass
+# Initialize Vault if not already initialized
+if vault status | grep -q 'Initialized.*false'; then
+  echo "Initializing Vault..."
+  vault operator init -key-shares=5 -key-threshold=3 -format=json > /opt/vault/init.json
+  cat /opt/vault/init.json | jq -r '.unseal_keys_b64[0]' | xargs vault operator unseal
+  cat /opt/vault/init.json | jq -r '.unseal_keys_b64[1]' | xargs vault operator unseal
+  cat /opt/vault/init.json | jq -r '.unseal_keys_b64[2]' | xargs vault operator unseal
+fi
