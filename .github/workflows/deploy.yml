@@ -3,7 +3,7 @@ name: Deploy Vault to EC2
 on:
   push:
     branches:
-      - dev_kushalGowda
+      - main
 
 
 jobs:
