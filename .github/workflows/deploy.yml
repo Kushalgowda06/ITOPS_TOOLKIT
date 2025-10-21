@@ -35,7 +35,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Verify Docker installation
-      run: docker --versio
+      run: docker --version
 
     - name: Build & Push Vault Image
       run: |
