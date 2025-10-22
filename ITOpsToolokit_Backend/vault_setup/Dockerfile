@@ -16,7 +16,7 @@ FROM hashicorp/vault:latest
 COPY --from=certgen /vault/tls /vault/certs
 RUN chmod 644 /vault/certs/tls.crt /vault/certs/tls.key
 
-COPY vault.hcl /vault/config/vault.hcl
-COPY init_vault.sh /vault/init_vault.sh
 
+COPY ITOpsToolokit_Backend/vault_setup/vault.hcl /vault/config/vault.hcl
+COPY ITOpsToolokit_Backend/vault_setup/init_vault.sh /vault/init_vault.sh
 RUN chmod +x /vault/init_vault.sh
