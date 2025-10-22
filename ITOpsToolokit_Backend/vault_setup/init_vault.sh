@@ -1,14 +1,8 @@
 #!/bin/bash
 
-# NOTE: The previous script started Vault in the background (&) and then ran 
-# initialization. This is prone to error and container shutdown.
-
-# To simplify and ensure the container runs, we'll try to initialize first 
-# while Vault is still sealing/uninitialized, and then launch the final server.
-
 # Start Vault server in the background for initialization
 vault server -config=/vault/config/vault.hcl &
-VAULT_PID=$! # Capture the Vault server process ID
+VAULT_PID=$!
 sleep 5
 
 # Initialize Vault if not already initialized
@@ -26,6 +20,5 @@ grep 'Initial Root Token' /vault/init.txt | awk '{print $NF}' > /vault/.vault_to
 kill $VAULT_PID
 sleep 2
 
-# *** CHANGE 1: Launch the Vault server in the FOREGROUND using 'exec'. ***
-# This replaces the shell process with the Vault process, keeping the container running indefinitely.
+# FIX: Launch the Vault server in the FOREGROUND using 'exec' to run as PID 1
 exec vault server -config=/vault/config/vault.hcl
