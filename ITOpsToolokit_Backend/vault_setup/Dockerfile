@@ -1,4 +1,5 @@
-FROM vault:1.14.1
+FROM vault:latest
+
 
 # Set working directory
 WORKDIR /vault
