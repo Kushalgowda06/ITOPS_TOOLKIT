@@ -1,19 +1,18 @@
+# Use a valid Vault image
+FROM vault:1.15.3
 
-FROM vault:1.15.3   # stable and available
-
-
-# Set working directory
+# Set working directory inside container
 WORKDIR /vault
 
-# Copy scripts and configs
-COPY init_vault.sh /vault/init_vault.sh
-COPY vault.hcl /vault/vault.hcl
+# Copy initialization and TLS scripts
+COPY init_vault.sh .
+COPY generate_tls.sh .
 
 # Make scripts executable
-RUN chmod +x /vault/init_vault.sh
+RUN chmod +x init_vault.sh generate_tls.sh
 
 # Expose Vault ports
 EXPOSE 8200 8201
 
-# Default command to initialize Vault
-CMD ["/vault/init_vault.sh"]
+# Start Vault container with TLS
+CMD ["./init_vault.sh"]
