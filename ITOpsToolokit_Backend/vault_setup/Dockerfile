@@ -1,14 +1,15 @@
-
 FROM hashicorp/vault:1.20
 
+# Install openssl
+USER root
+RUN apk add --no-cache openssl bash jq
 
-# Copy scripts
+# Copy your scripts
 COPY init_vault.sh /vault/init_vault.sh
 COPY generate_tls.sh /vault/generate_tls.sh
-COPY vault.hcl /vault/vault.hcl
 
-# Ensure scripts are executable
-RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
+# Make scripts executable
+RUN chmod +x /vault/*.sh
 
 # Set entrypoint
 ENTRYPOINT ["/vault/init_vault.sh"]
