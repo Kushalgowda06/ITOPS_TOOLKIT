@@ -1,21 +1,13 @@
-version: '3.8'
-
 services:
   vault:
-    build: .
+    container_name: vault-deploy-vault-1
+    image: vault-deploy-vault
     ports:
       - "8200:8200"
-    volumes:
-      - vault-data:/vault/data
-
-    command: /vault/init_vault.sh
-
-    cap_add:
-      - IPC_LOCK
-
     environment:
-      VAULT_ADDR: https://rba.cognizantgoc.com:8200
-      VAULT_CACERT: /vault/certs/tls.crt
-
-volumes:
-  vault-data:
+      VAULT_ADDR: "http://0.0.0.0:8200"
+    volumes:
+      - ./init_vault.sh:/vault/init_vault.sh
+      - ./vault.hcl:/vault/config/vault.hcl
+      - ./tls:/vault/certs
+    command: ["/vault/init_vault.sh"]
