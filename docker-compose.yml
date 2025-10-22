@@ -1,14 +1,17 @@
-version: '3.9'
+version: "3.9"
 
 services:
   vault:
-    build: .
     container_name: vault
+    build: .
     ports:
       - "8200:8200"
       - "8201:8201"
     volumes:
-      - ./tls:/vault/certs
-      - ./data:/vault/data
-      - ./logs:/vault/logs
-      - ./vault.hcl:/vault/config/vault.hcl
+      - ./vault/file:/vault/file
+      - ./vault/config:/vault/config
+      - ./vault/logs:/vault/logs
+      - ./vault/certs:/vault/certs
+    environment:
+      VAULT_ADDR: "https://0.0.0.0:8200"
+    restart: unless-stopped
