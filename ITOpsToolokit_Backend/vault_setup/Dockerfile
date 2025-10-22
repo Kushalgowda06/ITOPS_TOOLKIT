@@ -1,5 +1,6 @@
 # Use a valid Vault image
-FROM vault:1.15.3
+FROM hashicorp/vault:1.15.3
+
 
 # Set working directory inside container
 WORKDIR /vault
