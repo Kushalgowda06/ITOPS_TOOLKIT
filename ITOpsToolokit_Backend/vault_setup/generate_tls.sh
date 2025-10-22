@@ -1,14 +1,14 @@
-#!/bin/sh
-# Generates TLS certs for Vault
+#!/bin/bash
 set -e
 
-mkdir -p /vault/certs
+CERT_DIR="./tls"
+mkdir -p "$CERT_DIR"
 
-# Self-signed certificate
-openssl req -out /vault/certs/tls.crt -new -keyout /vault/certs/tls.key \
+echo "Generating TLS certificate..."
+openssl req -out "$CERT_DIR/tls.crt" -new -keyout "$CERT_DIR/tls.key" \
   -newkey rsa:4096 -nodes -sha256 -x509 \
-  -subj "/O=cognizant/CN=RBAServer" \
-  -addext "subjectAltName = IP:0.0.0.0,DNS:rba.cognizantgoc.com" \
+  -subj "/O=Cognizant/CN=rba.cognizantgoc.com" \
+  -addext "subjectAltName=IP:0.0.0.0,DNS:rba.cognizantgoc.com" \
   -days 365
 
-chmod 644 /vault/certs/tls.crt /vault/certs/tls.key
+echo "TLS certificate generated at $CERT_DIR/tls.crt and $CERT_DIR/tls.key"
