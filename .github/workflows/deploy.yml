@@ -26,19 +26,16 @@ jobs:
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
-        # Ensure vault_setup directory exists
-        ls ITOpsToolokit_Backend/vault_setup || (echo "vault_setup directory missing!" && exit 1)
-
         scp -i ec2_key.pem -o StrictHostKeyChecking=no docker-compose.yml \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/Dockerfile \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/Dockerfile \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/vault.hcl \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/vault.hcl \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/init_vault.sh \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/init_vault.sh \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
 
     - name: Deploy Vault container on EC2
@@ -46,7 +43,7 @@ jobs:
         ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
           echo "---- Starting Vault Deployment ----"
 
-          # Install Docker and Docker Compose if missing
+          # Install Docker if missing
           if ! command -v docker &> /dev/null; then
             echo "Installing Docker..."
             sudo apt-get update -y && sudo apt-get install -y docker.io
@@ -54,13 +51,27 @@ jobs:
             sudo systemctl start docker
           fi
 
+          # Install Docker Compose if missing
           if ! docker compose version &> /dev/null; then
             echo "Installing Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
+          # Install Vault CLI if missing
+          if ! command -v vault &> /dev/null; then
+            echo "Installing Vault CLI..."
+            sudo apt-get update -y
+            sudo apt-get install -y gnupg software-properties-common curl
+            curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
+            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+            sudo apt update && sudo apt install vault -y
+          fi
+
           cd ~/vault-deploy
+
+          echo "Cleaning up existing Vault containers..."
+          docker rm -f $(docker ps -aq --filter name=vault) || true
 
           echo "Building Vault container..."
           docker compose build
