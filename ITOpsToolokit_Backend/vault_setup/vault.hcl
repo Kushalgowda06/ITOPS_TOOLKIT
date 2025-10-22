@@ -1,15 +1,11 @@
-ui = true
+listener "tcp" {
+  address = "0.0.0.0:8200"
+  tls_cert_file = "/vault/tls/tls.crt"
+  tls_key_file  = "/vault/tls/tls.key"
+}
 
 storage "file" {
-  path = "/opt/vault/data"
+  path = "/vault/data"
 }
 
-listener "tcp" {
-  address       = "0.0.0.0:8200"
-  tls_cert_file = "/opt/vault/tls/certfile.pem"
-  tls_key_file  = "/opt/vault/tls/keyfile.pem"
-}
-
-api_addr = "https://3.6.96.101:8200"
-
-disable_mlock = true
+ui = true
