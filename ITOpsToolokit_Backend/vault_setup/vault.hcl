@@ -8,7 +8,6 @@ storage "file" {
 
 listener "tcp" {
   address = "0.0.0.0:8200"
-  # *** CHANGE: Update file paths to /vault/certs ***
   tls_cert_file = "/vault/certs/tls.crt"
   tls_key_file  = "/vault/certs/tls.key"
 }
