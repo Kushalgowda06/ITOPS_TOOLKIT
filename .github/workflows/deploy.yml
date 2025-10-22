@@ -26,6 +26,9 @@ jobs:
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
+        # Ensure vault_setup directory exists
+        ls vault_setup || (echo "vault_setup directory missing!" && exit 1)
+
         scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/Dockerfile \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
 
