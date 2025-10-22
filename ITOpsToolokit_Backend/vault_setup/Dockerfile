@@ -1,5 +1,5 @@
 # Use official Vault image as base
-FROM vault:1.14.3
+FROM hashicorp/vault:1.14.3
 
 # Set working directory
 WORKDIR /vault
