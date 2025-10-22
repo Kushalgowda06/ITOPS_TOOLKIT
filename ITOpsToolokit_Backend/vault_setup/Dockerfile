@@ -1,4 +1,5 @@
-FROM vault:latest
+
+FROM vault:1.15.3   # stable and available
 
 
 # Set working directory
