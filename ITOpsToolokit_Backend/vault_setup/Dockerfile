@@ -5,9 +5,9 @@ FROM hashicorp/vault:1.14.3
 WORKDIR /vault
 
 # Copy configuration and scripts
-COPY vault_setup/vault.hcl /vault/vault.hcl
-COPY vault_setup/init_vault.sh /vault/init_vault.sh
-COPY vault_setup/generate_tls.sh /vault/generate_tls.sh
+COPY vault.hcl /vault/vault.hcl
+COPY init_vault.sh /vault/init_vault.sh
+COPY generate_tls.sh /vault/generate_tls.sh
 
 # Make scripts executable
 RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
