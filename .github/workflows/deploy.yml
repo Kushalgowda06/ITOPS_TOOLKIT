@@ -11,15 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------
-      # Step 1: Checkout repository
-      # -------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # Step 2: Configure AWS credentials
-      # -------------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -27,63 +21,35 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
           aws-region: ${{ secrets.AWS_REGION_RELEASE }}
 
-      # -------------------------------
-      # Step 3: Deploy Vault to EC2
-      # -------------------------------
-      - name: Deploy Vault
+      - name: Copy Vault setup files to EC2
         run: |
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
           chmod 600 ec2_key.pem
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ./vault_deploy \
+            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy
 
+      - name: Deploy Vault container on EC2
+        run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
             set -e
-            echo "---- Starting Vault Deployment ----"
+            cd ~/vault-deploy
 
             # Install Docker if missing
             if ! command -v docker &> /dev/null; then
-              echo "Installing Docker..."
               sudo apt-get update -y
-              sudo apt-get install -y docker.io
+              sudo apt-get install -y docker.io docker-compose jq
               sudo systemctl enable docker
               sudo systemctl start docker
             fi
 
-            # Install Docker Compose if missing
-            if ! docker compose version &> /dev/null; then
-              echo "Installing Docker Compose..."
-              sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-              sudo chmod +x /usr/local/bin/docker-compose
-            fi
-
-            # Clean old containers/images
+            # Remove old Vault container/images
             docker rm -f vault || true
-            docker image rm vault:latest || true
+            docker image rm -f vault || true
 
-            # Move to deployment directory
-            cd ~/vault-deploy
-
-            # Build Vault container
-            docker build -t vault .
-
-            # Run Vault container
-            docker run -d --name vault -p 8200:8200 -p 8201:8201 \
-              -v ~/vault-deploy/tls:/opt/vault/tls \
-              -v ~/vault-deploy/data:/opt/vault/data \
-              vault
-
-            echo "Waiting 10s for Vault to start..."
-            sleep 10
-
-            # Check container status and logs
-            docker ps -a
-            docker logs vault || true
-
-            echo "---- Vault Deployment Complete ----"
+            # Build and start Vault container
+            docker compose up -d --build
           EOF
 
-      # -------------------------------
-      # Step 4: Cleanup local EC2 key
-      # -------------------------------
-      - name: Remove EC2 private key
+      - name: Cleanup EC2 key
         if: always()
         run: rm -f ec2_key.pem
