@@ -4,13 +4,13 @@ FROM hashicorp/vault:1.14.3
 # Set working directory inside container
 WORKDIR /vault
 
-# Copy Vault configuration and scripts
-COPY ./vault.hcl /vault/vault.hcl
-COPY ./init_vault.sh /vault/init_vault.sh
-COPY ./generate_tls.sh /vault/generate_tls.sh
+# Copy Vault configuration and scripts from repo root
+COPY ITOpsToolokit_Backend/vault_setup/vault.hcl /vault/vault.hcl
+COPY ITOpsToolokit_Backend/vault_setup/init_vault.sh /vault/init_vault.sh
+COPY ITOpsToolokit_Backend/vault_setup/generate_tls.sh /vault/generate_tls.sh
 
-# Ensure scripts are executable
+# Make scripts executable
 RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
 
-# Set entrypoint to init script
+# Set the entrypoint to the initialization script
 ENTRYPOINT ["/vault/init_vault.sh"]
