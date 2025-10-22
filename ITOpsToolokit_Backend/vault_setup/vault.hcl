@@ -1,15 +1,11 @@
 ui = true
 
 storage "file" {
-  path = "/vault/data"
+  path = "/opt/vault/data"
 }
 
 listener "tcp" {
-  address     = "0.0.0.0:8200"
-  cluster_address = "0.0.0.0:8201"
-  tls_cert_file = "/vault/certs/tls.crt"
-  tls_key_file  = "/vault/certs/tls.key"
+  address       = "0.0.0.0:8200"
+  tls_cert_file = "/opt/vault/tls/tls.crt"
+  tls_key_file  = "/opt/vault/tls/tls.key"
 }
-
-disable_mlock = true
-api_addr = "https://rba.cognizantgoc.com:8200"
