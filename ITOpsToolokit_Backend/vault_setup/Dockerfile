@@ -1,15 +1,19 @@
-FROM hashicorp/vault:1.20
+# Use official Vault image as base
+FROM vault:1.14.3
 
-# Install openssl
-USER root
-RUN apk add --no-cache openssl bash jq
+# Set working directory
+WORKDIR /vault
 
-# Copy your scripts
-COPY init_vault.sh /vault/init_vault.sh
-COPY generate_tls.sh /vault/generate_tls.sh
+# Copy configuration and scripts into the container
+COPY vault_setup/vault.hcl /vault/vault.hcl
+COPY vault_setup/init_vault.sh /vault/init_vault.sh
+COPY vault_setup/generate_tls.sh /vault/generate_tls.sh
 
 # Make scripts executable
-RUN chmod +x /vault/*.sh
+RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
 
-# Set entrypoint
-ENTRYPOINT ["/vault/init_vault.sh"]
+# Expose Vault port
+EXPOSE 8200
+
+# Run your init script on container start
+CMD ["/vault/init_vault.sh"]
