@@ -1,15 +1,22 @@
+# -----------------------------------------------
+# Dockerfile for Vault production deployment
+# -----------------------------------------------
 FROM hashicorp/vault:latest
 
 # Create Vault directories
 RUN mkdir -p /vault/config /vault/file /vault/logs /vault/certs
 
-# Copy Vault files (make sure build context includes vault_setup folder)
+# Copy Vault config and init script
 COPY vault.hcl /vault/config/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
 
-# Make init script executable
-RUN chmod +x /vault/init_vault.sh
+# Fix line endings and set execute permission
+RUN apt-get update && apt-get install -y dos2unix \
+    && dos2unix /vault/init_vault.sh \
+    && chmod +x /vault/init_vault.sh
 
+# Expose Vault HTTP and HTTPS ports
 EXPOSE 8200 8201
 
-ENTRYPOINT ["/vault/init_vault.sh"]
+# Run initialization script
+ENTRYPOINT ["sh", "/vault/init_vault.sh"]
