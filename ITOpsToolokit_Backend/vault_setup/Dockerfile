@@ -15,10 +15,8 @@ RUN mkdir -p /vault/tls && \
 # --------------------------
 FROM hashicorp/vault:latest
 
-# Copy TLS certs from stage 1
+# Copy TLS certs and config
 COPY --from=certgen /vault/tls /vault/certs
-
-# Copy configuration & scripts (relative to build context)
 COPY vault.hcl /vault/config/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
 
@@ -27,9 +25,7 @@ RUN chmod 644 /vault/config/vault.hcl && \
     chmod +x /vault/init_vault.sh && \
     chmod 644 /vault/certs/tls.crt /vault/certs/tls.key
 
-# Expose Vault ports
 EXPOSE 8200 8201
 
-# Default command (use Vault’s entrypoint)
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["server", "-config=/vault/config/vault.hcl"]
+# Keep Vault's original entrypoint but override CMD
+CMD ["/vault/init_vault.sh"]
