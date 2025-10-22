@@ -3,14 +3,17 @@ set -e
 
 # Generate TLS if missing
 if [ ! -f /opt/vault/tls/tls.crt ]; then
-  ./generate_tls.sh
+  /vault/generate_tls.sh
 fi
 
-# Start Vault server
+# Start Vault server in foreground (so Docker keeps container alive)
 vault server -config=/vault/vault.hcl &
 
 # Wait for Vault to be ready
-sleep 10
+while ! vault status > /dev/null 2>&1; do
+  echo "Waiting for Vault to start..."
+  sleep 2
+done
 
 export VAULT_ADDR='https://0.0.0.0:8200'
 export VAULT_CACERT='/opt/vault/tls/tls.crt'
@@ -30,3 +33,6 @@ done
 # Print initial root token
 echo "Vault Root Token:"
 jq -r '.root_token' /vault/init.json
+
+# Keep container running
+tail -f /dev/null
