@@ -15,7 +15,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # Step 2: Configure AWS credentials (if needed for ECR)
+      # Step 2: Configure AWS credentials (if using ECR)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -29,16 +29,14 @@ jobs:
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-          # Ensure target directory exists
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
             "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault_setup"
 
-          # Copy files (corrected path)
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
             ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault_setup/
 
       # Step 4: Build & deploy Vault container
-      - name: Deploy Vault container on EC2
+      - name: Build & Run Vault on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
             echo "---- Starting Vault Deployment ----"
@@ -65,10 +63,15 @@ jobs:
             docker image prune -af
 
             echo "---- Building Vault container ----"
+            # Ensure the build context is correct
             docker build -t vault .
 
             echo "---- Starting Vault container ----"
-            docker run -d --name vault -p 8200:8200 -p 8201:8201 vault
+            # Install dependencies inside container and mount scripts
+            docker run -d \
+              --name vault \
+              -p 8200:8200 -p 8201:8201 \
+              vault /bin/bash -c "apt-get update && apt-get install -y openssl jq && /vault/init_vault.sh"
 
             echo "---- Vault Deployment Complete ----"
             docker ps -a
