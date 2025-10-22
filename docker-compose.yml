@@ -6,20 +6,15 @@ services:
     ports:
       - "8200:8200"
     volumes:
-      # Removed the conflicting ./tls:/vault/tls mount. 
-      # Certificates are now generated/copied correctly by the Dockerfile into /vault/certs.
-      
-      # NOTE: For configuration files (vault.hcl, init_vault.sh), it's generally better 
-      # to COPY them into the image (as your Dockerfile does) than to mount them,
-      # to ensure the build process is reproducible.
-      # However, if you must mount, verify the host paths match the container paths:
-      # - ./vault.hcl:/vault/config/vault.hcl  <-- Assumes vault.hcl is in the same dir as docker-compose.yml
-      # - ./init_vault.sh:/vault/init_vault.sh <-- Assumes init_vault.sh is in the same dir as docker-compose.yml
-      
+      # Removed the conflicting ./tls:/vault/tls mount.
       - vault-data:/vault/data
       
-    # *** CHANGE 1: Use the init_vault.sh script as the command/entrypoint. ***
-    # This ensures the initialization and unsealing logic runs first.
+      # FIX: Explicitly mount config/init files to bypass potential Dockerfile COPY failures
+      # Assumes running docker-compose from the repository root
+      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/config/vault.hcl
+      - ./ITOpsToolokit_Backend/vault_setup/init_vault.sh:/vault/init_vault.sh
+      
+    # FIX: Use the initialization script as the container command
     command: /vault/init_vault.sh
 
     cap_add:
@@ -27,8 +22,6 @@ services:
     
     environment:
       VAULT_ADDR: https://rba.cognizantgoc.com:8200
-      
-      # *** CHANGE 2: Point VAULT_CACERT to the final path /vault/certs. ***
       VAULT_CACERT: /vault/certs/tls.crt
 
 volumes:
