@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   vault:
     build: .
@@ -8,11 +10,11 @@ services:
       - ./vault.hcl:/vault/config/vault.hcl
       - ./init_vault.sh:/vault/init_vault.sh
       - vault-data:/vault/data
-    command: server -config=/vault/config/vault.hcl
     cap_add:
       - IPC_LOCK
+    command: server -config=/vault/config/vault.hcl
     environment:
       VAULT_ADDR: https://rba.cognizantgoc.com:8200
       VAULT_CACERT: /vault/tls/tls.crt
-    volumes:
-      vault-data:
+volumes:
+  vault-data:
