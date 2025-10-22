@@ -1,12 +1,14 @@
+version: '3.9'
+
 services:
   vault:
     build: .
-    container_name: vault-deploy-vault
+    container_name: vault-deploy
     ports:
       - "8200:8200"
       - "8201:8201"
     volumes:
-      - ./vault.hcl:/vault/config/vault.hcl
-      - ./init_vault.sh:/vault/init_vault.sh
       - ./tls:/vault/certs
-    restart: unless-stopped
+      - ./data:/vault/data
+      - ./logs:/vault/logs
+      - ./vault.hcl:/vault/config/vault.hcl
