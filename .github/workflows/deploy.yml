@@ -26,11 +26,11 @@ jobs:
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no docker-compose.yml \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
-
         scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/Dockerfile \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
+
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/docker-compose.yml \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
 
         scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/vault.hcl \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
