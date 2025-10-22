@@ -1,7 +1,7 @@
 #!/bin/sh
 
 export VAULT_ADDR=https://3.6.96.101:8200
-export VAULT_CACERT=/opt/vault_setup/tls/certfile.pem
+export VAULT_CACERT=/opt/vault/tls/certfile.pem
 
 # Wait for Vault to be ready
 sleep 5
