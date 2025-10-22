@@ -4,7 +4,6 @@ services:
   vault:
     container_name: vault
     build: .
-    image: vault-deploy-vault
     ports:
       - "8200:8200"
       - "8201:8201"
