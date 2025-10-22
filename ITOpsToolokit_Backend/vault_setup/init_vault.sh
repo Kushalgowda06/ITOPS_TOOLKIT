@@ -1,33 +1,47 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
-echo "Generating TLS certificates..."
-/vault/generate_tls.sh
+VAULT_ADDR="https://rba.cognizantgoc.com:8200"
+TLS_DIR="/vault/certs"
+DATA_DIR="/vault/data"
 
-echo "Starting Vault in background..."
-vault server -config=/vault/config/vault.hcl &
-VAULT_PID=$!
-sleep 5
-
-echo "Checking Vault status..."
-if ! vault status >/dev/null 2>&1; then
-  echo "Initializing Vault..."
-  vault operator init -key-shares=5 -key-threshold=3 > /vault/init.txt
-else
-  echo "Vault already initialized."
+# Generate TLS certs if missing
+if [ ! -f "$TLS_DIR/tls.crt" ] || [ ! -f "$TLS_DIR/tls.key" ]; then
+    echo "Generating TLS certificates..."
+    mkdir -p $TLS_DIR
+    openssl req -out $TLS_DIR/tls.crt -new -keyout $TLS_DIR/tls.key \
+        -newkey rsa:4096 -nodes -sha256 -x509 \
+        -subj "/O=Cognizant/CN=RBAServer" \
+        -addext "subjectAltName = IP:0.0.0.0,DNS:rba.cognizantgoc.com" \
+        -days 365
 fi
 
-echo "Unsealing Vault..."
-grep 'Unseal Key' /vault/init.txt | head -n 3 | awk '{print $NF}' | while read key; do
-  vault operator unseal "$key"
-done
+# Start Vault in server mode in the background
+vault server -config=/vault/config/vault.hcl &
 
-echo "Saving root token..."
-grep 'Initial Root Token' /vault/init.txt | awk '{print $NF}' > /vault/.vault_token
+# Wait for Vault to be up
+echo "Waiting for Vault to start..."
+sleep 10
 
-echo "Stopping background Vault..."
-kill $VAULT_PID
-sleep 2
+export VAULT_ADDR=$VAULT_ADDR
+export VAULT_CACERT="$TLS_DIR/tls.crt"
 
-echo "Starting Vault in foreground..."
-exec vault server -config=/vault/config/vault.hcl
+# Check if Vault is already initialized
+if ! vault status | grep -q "Initialized.*true"; then
+    echo "Initializing Vault..."
+    vault operator init -key-shares=5 -key-threshold=3 > /vault/init_output.txt
+    cat /vault/init_output.txt
+
+    # Unseal Vault automatically using first 3 keys
+    KEYS=$(grep 'Unseal Key' /vault/init_output.txt | awk '{print $4}')
+    i=0
+    for key in $KEYS; do
+        if [ $i -lt 3 ]; then
+            vault operator unseal $key
+            i=$((i+1))
+        fi
+    done
+fi
+
+echo "Vault is initialized and unsealed."
+tail -f /vault/logs/vault.log
