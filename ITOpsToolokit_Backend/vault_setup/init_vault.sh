@@ -1,19 +1,16 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 # Generate TLS if missing
 if [ ! -f /opt/vault/tls/tls.crt ]; then
-  /vault/generate_tls.sh
+  sh /vault/generate_tls.sh
 fi
 
-# Start Vault server in foreground (so Docker keeps container alive)
+# Start Vault server in background
 vault server -config=/vault/vault.hcl &
 
 # Wait for Vault to be ready
-while ! vault status > /dev/null 2>&1; do
-  echo "Waiting for Vault to start..."
-  sleep 2
-done
+sleep 10
 
 export VAULT_ADDR='https://0.0.0.0:8200'
 export VAULT_CACERT='/opt/vault/tls/tls.crt'
@@ -25,14 +22,13 @@ if ! vault status | grep -q 'Initialized.*true'; then
 fi
 
 # Unseal Vault with first 3 keys
-for i in 0 1 2; do
+i=0
+while [ $i -lt 3 ]; do
   KEY=$(jq -r ".unseal_keys_b64[$i]" /vault/init.json)
-  vault operator unseal $KEY
+  vault operator unseal "$KEY"
+  i=$((i+1))
 done
 
 # Print initial root token
 echo "Vault Root Token:"
 jq -r '.root_token' /vault/init.json
-
-# Keep container running
-tail -f /dev/null
