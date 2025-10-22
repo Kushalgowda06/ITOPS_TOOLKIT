@@ -1,10 +1,10 @@
 # Use official Vault image
 FROM hashicorp/vault:1.14.3
 
-# Set working directory
+# Set working directory inside container
 WORKDIR /vault
 
-# Copy configuration and scripts
+# Copy Vault configuration and scripts
 COPY vault.hcl /vault/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
 COPY generate_tls.sh /vault/generate_tls.sh
@@ -12,5 +12,5 @@ COPY generate_tls.sh /vault/generate_tls.sh
 # Make scripts executable
 RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
 
-# Set entrypoint to your init script
-ENTRYPOINT ["/vault/init_vault.sh"]
+# Start Vault via init script
+CMD ["/vault/init_vault.sh"]
