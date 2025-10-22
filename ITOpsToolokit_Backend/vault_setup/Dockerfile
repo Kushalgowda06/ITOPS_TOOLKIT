@@ -7,8 +7,8 @@ RUN mkdir -p /vault/tls /vault/data \
         -subj "/O=Cognizant/CN=RBAServer" \
         -addext "subjectAltName = IP:0.0.0.0,DNS:rba.cognizantgoc.com" \
         -days 365
+
 COPY vault.hcl /vault/config/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
 
 RUN chmod +x /vault/init_vault.sh
-``
