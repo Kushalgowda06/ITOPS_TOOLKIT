@@ -11,15 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------
       # Step 1: Checkout repository
-      # -------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # Step 2: Configure AWS credentials
-      # -------------------------------
+      # Step 2: Configure AWS credentials (if needed for ECR)
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -27,28 +23,24 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
           aws-region: ${{ secrets.AWS_REGION_RELEASE }}
 
-      # -------------------------------
       # Step 3: Copy Vault setup files to EC2
-      # -------------------------------
       - name: Copy Vault setup files
         run: |
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
+          # Ensure target directory exists
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-setup"
+            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault_setup"
 
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r vault_setup/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-setup/
+          # Copy files (corrected path)
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
+            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault_setup/
 
-      # -------------------------------
-      # Step 4: Deploy Vault container on EC2
-      # -------------------------------
+      # Step 4: Build & deploy Vault container
       - name: Deploy Vault container on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            set -e
-
             echo "---- Starting Vault Deployment ----"
 
             # Install Docker if missing
@@ -65,29 +57,25 @@ jobs:
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
-            cd ~/vault-setup
+            cd ~/vault_setup
 
-            echo "Cleaning up old containers/images..."
+            echo "---- Cleaning old Vault containers ----"
             docker rm -f vault || true
             docker rmi vault:latest || true
+            docker image prune -af
 
-            echo "Building Vault container..."
+            echo "---- Building Vault container ----"
             docker build -t vault .
 
-            echo "Starting Vault container..."
+            echo "---- Starting Vault container ----"
             docker run -d --name vault -p 8200:8200 -p 8201:8201 vault
 
-            echo "Vault container status:"
-            docker ps -a
-            echo "Vault logs:"
-            docker logs vault || echo "Vault container not found or failed to start."
-
             echo "---- Vault Deployment Complete ----"
+            docker ps -a
+            docker logs vault || echo "Vault container not found or failed to start."
           EOF
 
-      # -------------------------------
       # Step 5: Clean up EC2 key
-      # -------------------------------
       - name: Remove EC2 private key
         if: always()
         run: rm -f ec2_key.pem
