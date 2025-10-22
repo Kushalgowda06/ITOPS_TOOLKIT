@@ -12,9 +12,10 @@ services:
       - vault-data:/vault/data
     cap_add:
       - IPC_LOCK
-    command: server -config=/vault/config/vault.hcl
+    command: /vault/init_vault.sh
     environment:
       VAULT_ADDR: https://rba.cognizantgoc.com:8200
       VAULT_CACERT: /vault/tls/tls.crt
+
 volumes:
   vault-data:
