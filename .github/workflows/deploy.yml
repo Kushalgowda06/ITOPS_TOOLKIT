@@ -35,25 +35,24 @@ jobs:
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-          # Ensure target directory exists
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
             "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy"
 
-          # SCP all necessary files
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
             ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
 
       # -------------------------------
-      # Step 4: Build & deploy Vault container
+      # Step 4: Deploy Vault container on EC2
       # -------------------------------
-      - name: Deploy Vault container on EC2
+      - name: Deploy Vault container
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
             echo "---- Starting Vault Deployment ----"
 
             # Install Docker if missing
             if ! command -v docker &> /dev/null; then
-              sudo apt-get update -y && sudo apt-get install -y docker.io
+              sudo apt-get update -y
+              sudo apt-get install -y docker.io
               sudo systemctl enable docker
               sudo systemctl start docker
             fi
@@ -66,9 +65,10 @@ jobs:
 
             cd ~/vault-deploy
 
-            echo "---- Cleaning old Vault containers/images ----"
+            echo "---- Cleaning old containers and images ----"
             docker rm -f vault || true
-            docker rmi vault-deploy-vault || true
+            docker rm -f $(docker ps -aq) || true
+            docker rmi vault-deploy-vault:latest || true
 
             echo "---- Building Vault container ----"
             docker-compose build
@@ -76,8 +76,9 @@ jobs:
             echo "---- Starting Vault container ----"
             docker-compose up -d
 
-            echo "---- Vault Deployment Complete ----"
+            echo "---- Vault container status ----"
             docker ps -a
+            echo "---- Vault Deployment Complete ----"
           EOF
 
       # -------------------------------
