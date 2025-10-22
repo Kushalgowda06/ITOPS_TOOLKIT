@@ -1,14 +1,12 @@
-FROM hashicorp/vault:1.15.3
+FROM vault:latest
 
-# Set working directory
-WORKDIR /vault
+# Copy scripts
+COPY init_vault.sh /vault/init_vault.sh
+COPY generate_tls.sh /vault/generate_tls.sh
+COPY vault.hcl /vault/vault.hcl
 
-# Copy scripts and config
-COPY init_vault.sh generate_tls.sh vault.hcl /vault/
+# Ensure scripts are executable
 RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
 
-# Expose Vault port
-EXPOSE 8200
-
-# Run your init script
+# Set entrypoint
 ENTRYPOINT ["/vault/init_vault.sh"]
