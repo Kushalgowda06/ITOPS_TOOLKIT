@@ -1,12 +1,15 @@
-# Vault listener
-listener "tcp" {
-  address       = "0.0.0.0:8200"
-  tls_cert_file = "/vault/certs/tls.crt"
-  tls_key_file  = "/vault/certs/tls.key"
-}
+ui = true
 
 storage "file" {
   path = "/vault/data"
 }
 
-ui = true
+listener "tcp" {
+  address     = "0.0.0.0:8200"
+  cluster_address = "0.0.0.0:8201"
+  tls_cert_file = "/vault/certs/tls.crt"
+  tls_key_file  = "/vault/certs/tls.key"
+}
+
+disable_mlock = true
+api_addr = "https://rba.cognizantgoc.com:8200"
