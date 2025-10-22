@@ -14,6 +14,12 @@ RUN mkdir -p /vault/tls && \
 FROM hashicorp/vault:latest
 
 COPY --from=certgen /vault/tls /vault/tls
+
+# --- START OF CHANGE ---
+# Ensure the Vault process can read the TLS files (most common fix for this error)
+RUN chmod 644 /vault/tls/tls.crt /vault/tls/tls.key
+# --- END OF CHANGE ---
+
 COPY vault.hcl /vault/config/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
 
