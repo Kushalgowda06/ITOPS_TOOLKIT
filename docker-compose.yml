@@ -8,27 +8,21 @@ services:
     ports:
       - "8200:8200"
     environment:
-      VAULT_ADDR: "https://0.0.0.0:8200"
+      VAULT_ADDR: "http://0.0.0.0:8200"
       VAULT_LOCAL_CONFIG: |
         {
           "backend": {
-            "file": {
-              "path": "/vault/file"
-            }
+            "file": { "path": "/vault/file" }
           },
           "listener": {
-            "tcp": {
-              "address": "0.0.0.0:8200",
-              "tls_cert_file": "/vault/tls/vault.crt",
-              "tls_key_file": "/vault/tls/vault.key"
-            }
+            "tcp": { "address": "0.0.0.0:8200", "tls_disable": 1 }
           },
           "default_lease_ttl": "168h",
           "max_lease_ttl": "720h"
         }
     volumes:
-      - vault_data:/vault/file
-      - ./tls:/vault/tls:ro
+      - vault-deploy_vault-data:/vault/file
 
 volumes:
-  vault_data:
+  vault-deploy_vault-data:
+    external: true
