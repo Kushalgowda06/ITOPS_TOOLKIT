@@ -1,12 +1,20 @@
-# Stage 1: Vault Base
+# -----------------------------------------------
+# Dockerfile for Vault production deployment
+# -----------------------------------------------
 FROM hashicorp/vault:latest
 
-# Copy Vault config and TLS certificates
-COPY vault.hcl /vault/config/vault.hcl
-COPY tls /vault/certs
+# Create Vault directories
+RUN mkdir -p /vault/config /vault/file /vault/logs /vault/certs
 
-# Make init script executable
+# Copy Vault config and init script
+COPY vault.hcl /vault/config/vault.hcl
 COPY init_vault.sh /vault/init_vault.sh
-RUN chmod +x /vault/init_vault.sh \
-    && chmod 644 /vault/config/vault.hcl \
-    && chmod 644 /vault/certs/tls.crt /vault/certs/tls.key
+
+# Set execute permission
+RUN chmod +x /vault/init_vault.sh
+
+# Expose Vault HTTP and HTTPS ports
+EXPOSE 8200 8201
+
+# Run initialization script
+ENTRYPOINT ["/vault/init_vault.sh"]
