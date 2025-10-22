@@ -1,15 +1,20 @@
-version: '3.8'
+version: '3.9'
 
 services:
   vault:
+    build:
+      context: ./vault_setup
+      dockerfile: Dockerfile
     container_name: vault
-    build: .
     ports:
       - "8200:8200"
-      - "8201:8201"
-    volumes:
-      - ./data:/opt/vault/data         # Persistent Vault storage
-      - ./tls:/opt/vault/tls           # TLS certificates
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
+    volumes:
+      - vault_tls:/opt/vault/tls
+      - vault_data:/vault/data
     restart: unless-stopped
+
+volumes:
+  vault_tls:
+  vault_data:
