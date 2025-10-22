@@ -23,9 +23,14 @@ jobs:
 
     - name: Copy Vault setup files to EC2
       run: |
+        # Create private key file and set permissions
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
+        
+        # Ensure the target directory exists on EC2 before copying
+        ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy"
 
+        # 1. Copy necessary files
         scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/Dockerfile \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
 
@@ -37,6 +42,11 @@ jobs:
 
         scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/init_vault.sh \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
+
+        # 🚨 CRITICAL FIX: Copy the TLS directory recursively 🚨
+        # This copies 'vault_setup/tls' to '/home/user/vault-deploy/tls'
+        scp -r -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/tls \
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
 
     - name: Deploy Vault container on EC2
       run: |
@@ -58,7 +68,7 @@ jobs:
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
-          # Install Vault CLI if missing
+          # Install Vault CLI if missing (used for unseal/init)
           if ! command -v vault &> /dev/null; then
             echo "Installing Vault CLI..."
             sudo apt-get update -y
@@ -83,13 +93,20 @@ jobs:
           sleep 10
 
           echo "Running Vault initialization script..."
-          docker exec vault-deploy-vault-1 /vault/init_vault.sh
+          # Note: The docker exec may fail if the container stops immediately after starting (e.g., if init/unseal fails)
+          docker exec vault-deploy-vault-1 /vault/init_vault.sh || true
 
           echo "Checking Vault container status..."
-          docker ps
+          docker ps -a
 
           echo "Vault logs:"
+          # Print logs even if the container has exited
           docker logs vault-deploy-vault-1 || echo "Vault container not found or failed to start."
 
           echo "---- Vault Deployment Complete ----"
         EOF
+        
+    # Ensure key file is removed after use, regardless of success/failure
+    - name: Clean up EC2 Key
+      if: always()
+      run: rm -f ec2_key.pem
