@@ -6,8 +6,8 @@ storage "file" {
 
 listener "tcp" {
   address       = "0.0.0.0:8200"
-  tls_cert_file = "/opt/vault/tls/certfile.pem"
-  tls_key_file  = "/opt/vault/tls/keyfile.pem"
+  tls_cert_file = "/opt/vault_setup/tls/certfile.pem"
+  tls_key_file  = "/opt/vault_setup/tls/keyfile.pem"
 }
 
 api_addr = "https://3.6.96.101:8200"
