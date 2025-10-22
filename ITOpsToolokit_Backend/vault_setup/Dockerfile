@@ -1,4 +1,6 @@
-FROM vault:latest
+
+FROM hashicorp/vault:1.20
+
 
 # Copy scripts
 COPY init_vault.sh /vault/init_vault.sh
