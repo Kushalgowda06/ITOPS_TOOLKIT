@@ -14,3 +14,5 @@ services:
     environment:
       VAULT_ADDR: https://rba.cognizantgoc.com:8200
       VAULT_CACERT: /vault/tls/tls.crt
+    volumes:
+      vault-data:
