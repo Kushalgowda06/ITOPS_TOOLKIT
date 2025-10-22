@@ -21,32 +21,23 @@ jobs:
       # Step 2: Configure AWS credentials
       # -------------------------------
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_RELEASE }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
           aws-region: ${{ secrets.AWS_REGION_RELEASE }}
 
       # -------------------------------
-      # Step 3: Copy Vault setup files to EC2
+      # Step 3: Deploy Vault on EC2
       # -------------------------------
-      - name: Copy Vault setup files
+      - name: Deploy Vault
         run: |
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
           chmod 600 ec2_key.pem
 
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy"
-
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
-
-      # -------------------------------
-      # Step 4: Deploy Vault container on EC2
-      # -------------------------------
-      - name: Deploy Vault container
-        run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+            set -e
+
             echo "---- Starting Vault Deployment ----"
 
             # Install Docker if missing
@@ -63,27 +54,40 @@ jobs:
               sudo chmod +x /usr/local/bin/docker-compose
             fi
 
+            # Remove old Vault containers/images
+            docker rm -f vault || true
+            docker image rm vault:latest || true
+
+            # Ensure directories exist
+            mkdir -p ~/vault-deploy/tls ~/vault-deploy/data
+
+            # Copy Vault setup files (optional if already copied)
+            cp -r ~/vault-deploy/* ~/vault-deploy/
+
             cd ~/vault-deploy
 
-            echo "---- Cleaning old containers and images ----"
-            docker rm -f vault || true
-            docker rm -f $(docker ps -aq) || true
-            docker rmi vault-deploy-vault:latest || true
+            # Build Vault container
+            docker build -t vault .
 
-            echo "---- Building Vault container ----"
-            docker-compose build
+            # Run Vault container
+            docker run -d --name vault -p 8200:8200 -p 8201:8201 \
+              -v ~/vault-deploy/tls:/opt/vault/tls \
+              -v ~/vault-deploy/data:/opt/vault/data \
+              vault
 
-            echo "---- Starting Vault container ----"
-            docker-compose up -d
+            echo "Waiting 10s for Vault to start..."
+            sleep 10
 
-            echo "---- Vault container status ----"
+            # Check container status
             docker ps -a
+            docker logs vault || true
+
             echo "---- Vault Deployment Complete ----"
           EOF
 
       # -------------------------------
-      # Step 5: Clean up EC2 key
+      # Step 4: Cleanup
       # -------------------------------
-      - name: Remove EC2 private key
+      - name: Remove EC2 key
         if: always()
         run: rm -f ec2_key.pem
