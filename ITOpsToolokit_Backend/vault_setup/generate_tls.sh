@@ -1,14 +1,14 @@
 #!/bin/bash
 set -e
 
-CERT_DIR="./tls"
-mkdir -p "$CERT_DIR"
+CERT_DIR="/opt/vault/tls"
+mkdir -p $CERT_DIR
+cd $CERT_DIR
 
-echo "Generating TLS certificate..."
-openssl req -out "$CERT_DIR/tls.crt" -new -keyout "$CERT_DIR/tls.key" \
-  -newkey rsa:4096 -nodes -sha256 -x509 \
-  -subj "/O=Cognizant/CN=rba.cognizantgoc.com" \
-  -addext "subjectAltName=IP:0.0.0.0,DNS:rba.cognizantgoc.com" \
+# Generate self-signed certificate
+openssl req -out tls.crt -new -keyout tls.key -newkey rsa:4096 -nodes -sha256 -x509 \
+  -subj "/O=Company/CN=VaultServer" \
+  -addext "subjectAltName = IP:0.0.0.0,DNS:vault.local" \
   -days 365
 
-echo "TLS certificate generated at $CERT_DIR/tls.crt and $CERT_DIR/tls.key"
+chown -R 1000:1000 $CERT_DIR
