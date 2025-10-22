@@ -1,19 +1,17 @@
-# Use a valid Vault image
+# Use official Vault image
 FROM hashicorp/vault:1.15.3
 
-
-# Set working directory inside container
+# Set working directory inside the container
 WORKDIR /vault
 
-# Copy initialization and TLS scripts
-COPY init_vault.sh .
-COPY generate_tls.sh .
+# Copy your Vault initialization script into the container
+COPY init_vault.sh /vault/init_vault.sh
 
-# Make scripts executable
-RUN chmod +x init_vault.sh generate_tls.sh
+# Ensure the script is executable
+RUN chmod +x /vault/init_vault.sh
 
-# Expose Vault ports
-EXPOSE 8200 8201
+# Optionally, copy your Vault configuration files if you have any
+# COPY vault.hcl /vault/vault.hcl
 
-# Start Vault container with TLS
-CMD ["./init_vault.sh"]
+# Entrypoint to run Vault with your init script
+ENTRYPOINT ["/vault/init_vault.sh"]
