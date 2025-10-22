@@ -1,14 +1,19 @@
 services:
   vault:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: vault-deploy-vault
     ports:
       - "8200:8200"
-    cap_add:
-      - IPC_LOCK
-    environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
+      - "8201:8201"
     volumes:
+      - vault_data:/vault/file
+      - ./vault.hcl:/vault/config/vault.hcl
       - ./tls:/vault/certs
-      - ./vault_data:/vault/file
     restart: unless-stopped
+    environment:
+      VAULT_ADDR: http://0.0.0.0:8200
+
+volumes:
+  vault_data:
