@@ -4,56 +4,81 @@ on:
   push:
     branches:
       - main
+      - release/*
 
 jobs:
-  deploy:
+  deploy-vault:
     runs-on: ubuntu-latest
 
     steps:
-      # -------------------------------
       # Step 1: Checkout repository
-      # -------------------------------
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # -------------------------------
-      # Step 2: Set up AWS credentials (optional)
-      # -------------------------------
-      - name: Configure AWS credentials (optional)
+      # Step 2: Configure AWS credentials (if using ECR)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_RELEASE }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
           aws-region: ${{ secrets.AWS_REGION_RELEASE }}
-        continue-on-error: true
 
-      # -------------------------------
-      # Step 3: Set up Docker
-      # -------------------------------
-      - name: Set up Docker
-        uses: docker/setup-buildx-action@v3
-
-      # -------------------------------
-      # Step 4: Build Vault Docker image
-      # -------------------------------
-      - name: Build Vault Docker image
+      # Step 3: Copy Vault setup files to EC2
+      - name: Copy Vault setup files
         run: |
-          docker build -t vault:latest .
+          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
 
-      # -------------------------------
-      # Step 5: Deploy Vault container to EC2
-      # -------------------------------
-      - name: SSH to EC2 and deploy Vault
-        uses: appleboy/ssh-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker pull vault:latest || true
-            docker stop vault || true
-            docker rm vault || true
-            docker run -d --name vault \
-              -p 8200:8200 \
-              -v /opt/vault:/opt/vault \
-              vault:latest
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
+            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault_setup"
+
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
+            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault_setup/
+
+      # Step 4: Build & deploy Vault container
+      - name: Build & Run Vault on EC2
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+            echo "---- Starting Vault Deployment ----"
+
+            # Install Docker if missing
+            if ! command -v docker &> /dev/null; then
+              sudo apt-get update -y
+              sudo apt-get install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+            fi
+
+            # Install Docker Compose if missing
+            if ! docker compose version &> /dev/null; then
+              sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+              sudo chmod +x /usr/local/bin/docker-compose
+            fi
+
+            cd ~/vault_setup
+
+            echo "---- Cleaning old Vault containers ----"
+            docker rm -f vault || true
+            docker rmi vault:latest || true
+            docker image prune -af
+
+            echo "---- Building Vault container ----"
+            # Ensure the build context is correct
+            docker build -t vault .
+
+            echo "---- Starting Vault container ----"
+            # Install dependencies inside container and mount scripts
+            docker run -d \
+              --name vault \
+              -p 8200:8200 -p 8201:8201 \
+              vault /bin/bash -c "apt-get update && apt-get install -y openssl jq && /vault/init_vault.sh"
+
+            echo "---- Vault Deployment Complete ----"
+            docker ps -a
+            docker logs vault || echo "Vault container not found or failed to start."
+          EOF
+
+      # Step 5: Clean up EC2 key
+      - name: Remove EC2 private key
+        if: always()
+        run: rm -f ec2_key.pem
