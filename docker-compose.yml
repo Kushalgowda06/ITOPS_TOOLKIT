@@ -13,4 +13,4 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./vault-deploy/tls/tls:/opt/vault/tls
+      - ./tls/tls:/opt/vault/tls
