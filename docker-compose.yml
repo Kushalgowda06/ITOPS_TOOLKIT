@@ -6,20 +6,13 @@ services:
     ports:
       - "8200:8200"
     volumes:
-      # Removed the conflicting ./tls:/vault/tls mount.
       - vault-data:/vault/data
-      
-      # FIX: Explicitly mount config/init files to bypass potential Dockerfile COPY failures
-      # Assumes running docker-compose from the repository root
-      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/config/vault.hcl
-      - ./ITOpsToolokit_Backend/vault_setup/init_vault.sh:/vault/init_vault.sh
-      
-    # FIX: Use the initialization script as the container command
+
     command: /vault/init_vault.sh
 
     cap_add:
       - IPC_LOCK
-    
+
     environment:
       VAULT_ADDR: https://rba.cognizantgoc.com:8200
       VAULT_CACERT: /vault/certs/tls.crt
