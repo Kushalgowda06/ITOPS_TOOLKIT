@@ -1,13 +1,14 @@
 services:
   vault:
-    container_name: vault-deploy-vault-1
-    image: vault-deploy-vault
+    build: .
+    container_name: vault-deploy-vault
     ports:
       - "8200:8200"
+    cap_add:
+      - IPC_LOCK
     environment:
-      VAULT_ADDR: "http://0.0.0.0:8200"
+      - VAULT_ADDR=http://0.0.0.0:8200
     volumes:
-      - ./init_vault.sh:/vault/init_vault.sh
-      - ./vault.hcl:/vault/config/vault.hcl
       - ./tls:/vault/certs
-    command: ["/vault/init_vault.sh"]
+      - ./vault_data:/vault/file
+    restart: unless-stopped
