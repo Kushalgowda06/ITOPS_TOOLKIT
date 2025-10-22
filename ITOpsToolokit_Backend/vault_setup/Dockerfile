@@ -1,19 +1,17 @@
-# Vault production image
-FROM hashicorp/vault:latest
+FROM vault:1.14.1
 
-# Create directories
-RUN mkdir -p /vault/config /vault/file /vault/logs /vault/certs
+# Set working directory
+WORKDIR /vault
 
-# Copy Vault config and init script
-COPY vault.hcl /vault/config/vault.hcl
+# Copy scripts and configs
 COPY init_vault.sh /vault/init_vault.sh
-COPY generate_tls.sh /vault/generate_tls.sh
+COPY vault.hcl /vault/vault.hcl
 
-# Fix permissions and line endings
-RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
+# Make scripts executable
+RUN chmod +x /vault/init_vault.sh
 
 # Expose Vault ports
 EXPOSE 8200 8201
 
-# Start Vault initialization script
-ENTRYPOINT ["/vault/init_vault.sh"]
+# Default command to initialize Vault
+CMD ["/vault/init_vault.sh"]
