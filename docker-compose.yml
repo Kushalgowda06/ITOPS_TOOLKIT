@@ -8,7 +8,9 @@ services:
       - "8200:8200"
     environment:
       VAULT_ADDR: https://3.6.96.101:8200
-      VAULT_CACERT: /opt/vault/tls/tls.crt
+      VAULT_CACERT: /opt/vault/tls/certfile.pem
       VAULT_API_ADDR: https://3.6.96.101:8200
     cap_add:
       - IPC_LOCK
+    volumes:
+      - ./ITOpsToolokit_Backend/vault_setup/tls:/opt/vault/tls
