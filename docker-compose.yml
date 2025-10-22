@@ -1,12 +1,21 @@
+version: "3.9"  # Remove older 'version' warnings
+
 services:
   vault:
-    image: vault-deploy-vault
-    container_name: vault-deploy-vault-1
+    build: .
+    container_name: vault-deploy-vault
     ports:
-      - "8200:8200"
-      - "8201:8201"
+      - "8200:8200"  # Vault HTTP
+      - "8201:8201"  # Vault HTTPS / internal
     volumes:
-      - ./file:/vault/file
-      - ./logs:/vault/logs
-      - ./certs:/vault/certs
+      - vault-data:/vault/file
+      - ./vault.hcl:/vault/config/vault.hcl
+      - ./init_vault.sh:/vault/init_vault.sh
+      - ./tls:/vault/certs
     restart: unless-stopped
+    environment:
+      VAULT_ADDR: "http://127.0.0.1:8200"
+
+volumes:
+  vault-data:
+    driver: local
