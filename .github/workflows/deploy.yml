@@ -30,22 +30,22 @@ jobs:
         # Ensure the target directory exists on EC2 before copying
         ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy"
 
-        # 1. Copy necessary files
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/Dockerfile \
+        # 1. Copy necessary files (Paths updated to include ITOpsToolokit_Backend/)
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/Dockerfile \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/docker-compose.yml \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/docker-compose.yml \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/vault.hcl \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/vault.hcl \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
 
-        scp -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/init_vault.sh \
+        scp -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/init_vault.sh \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
 
-        # 🚨 CRITICAL FIX: Copy the TLS directory recursively 🚨
-        # This copies 'vault_setup/tls' to '/home/user/vault-deploy/tls'
-        scp -r -i ec2_key.pem -o StrictHostKeyChecking=no vault_setup/tls \
+        # 🚨 CRITICAL FIX: Copy the TLS directory recursively 🚨 (Path updated)
+        # This copies 'ITOpsToolokit_Backend/vault_setup/tls' to '/home/user/vault-deploy/tls'
+        scp -r -i ec2_key.pem -o StrictHostKeyChecking=no ITOpsToolokit_Backend/vault_setup/tls \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
 
     - name: Deploy Vault container on EC2
