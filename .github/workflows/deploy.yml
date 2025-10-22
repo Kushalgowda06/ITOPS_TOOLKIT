@@ -1,5 +1,5 @@
 name: Deploy Vault to EC2
-##
+
 on:
   push:
     branches:
@@ -11,13 +11,13 @@ jobs:
 
     steps:
       # -------------------------------
-      # Step 1: Checkout repository
+      # Step 1: Checkout code
       # -------------------------------
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       # -------------------------------
-      # Step 2: SSH into EC2 & Deploy Vault
+      # Step 2: SSH to EC2 & Deploy Vault
       # -------------------------------
       - name: Deploy Vault on EC2
         env:
@@ -27,25 +27,22 @@ jobs:
         run: |
           echo "Starting Vault deployment..."
 
-          # Create SSH key
           echo "$SSH_KEY" > vault_key.pem
           chmod 600 vault_key.pem
 
-          # Connect to EC2
-          ssh -o StrictHostKeyChecking=no -i vault_key.pem ${EC2_USER}@${EC2_HOST} << 'EOF'
-
+          ssh -o StrictHostKeyChecking=no -i vault_key.pem ${EC2_USER}@${EC2_HOST} << 'REMOTE_CMDS'
             echo "*** Starting Vault Deployment ***"
 
-            # Create directories for Vault under /home/ubuntu
+            # Create necessary directories
             mkdir -p /home/ubuntu/vault/{config,data,tls}
             chmod -R 755 /home/ubuntu/vault
 
-            # Stop any old Vault container
+            # Stop any existing container
             docker stop vault || true
             docker rm vault || true
 
-            # Create Vault config
-            cat <<EOC > /home/ubuntu/vault/config/vault.hcl
+            # Write Vault config
+            cat <<'EOC' > /home/ubuntu/vault/config/vault.hcl
 ui = true
 
 storage "file" {
@@ -62,6 +59,7 @@ disable_mlock = true
 api_addr = "https://$(curl -s http://checkip.amazonaws.com):8200"
 EOC
 
+            # Generate TLS certs
             echo "Generating TLS certificates..."
             cd /home/ubuntu/vault/tls
             IP=$(curl -s http://checkip.amazonaws.com)
@@ -72,6 +70,7 @@ EOC
 
             echo "TLS certificate generated at /home/ubuntu/vault/tls"
 
+            # Run Vault container
             echo "Starting Vault container..."
             docker run -d --name vault \
               -v /home/ubuntu/vault/config:/opt/vault/config \
@@ -94,5 +93,4 @@ EOC
 
             echo "Vault container logs (last 20 lines):"
             docker logs --tail 20 vault
-
-          EOF
+          REMOTE_CMDS
