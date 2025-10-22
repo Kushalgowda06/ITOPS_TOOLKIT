@@ -1,68 +1,30 @@
 #!/bin/bash
 set -e
 
-# Directories
-TLS_DIR=/vault/certs
-DATA_DIR=/vault/data
+VAULT_ADDR="https://127.0.0.1:8200"
+VAULT_CERT="./tls/tls.crt"
 
-mkdir -p $TLS_DIR
-mkdir -p $DATA_DIR
+export VAULT_ADDR
+export VAULT_CACERT="$VAULT_CERT"
 
-# Generate TLS certs if not exist
-if [ ! -f $TLS_DIR/tls.crt ] || [ ! -f $TLS_DIR/tls.key ]; then
-    echo "Generating TLS certificates..."
-    openssl req -out $TLS_DIR/tls.crt -new -keyout $TLS_DIR/tls.key \
-      -newkey rsa:4096 -nodes -sha256 -x509 \
-      -subj "/O=VaultCompany/CN=vault.local" \
-      -addext "subjectAltName = IP:0.0.0.0,DNS:vault.local" \
-      -days 365
-fi
+echo "Checking Vault status..."
+vault status || true
 
-# Vault configuration
-VAULT_CONFIG=/vault/vault.hcl
-cat > $VAULT_CONFIG <<EOF
-ui = true
-storage "file" {
-  path = "$DATA_DIR"
-}
-listener "tcp" {
-  address       = "0.0.0.0:8200"
-  tls_cert_file = "$TLS_DIR/tls.crt"
-  tls_key_file  = "$TLS_DIR/tls.key"
-}
-EOF
+# Initialize Vault only if not already initialized
+if ! vault operator init -check; then
+  echo "Initializing Vault..."
+  vault operator init -key-shares=5 -key-threshold=3 -format=json > vault_init.json
 
-# Start Vault in background
-vault server -config=$VAULT_CONFIG &
+  UNSEAL_KEYS=$(jq -r '.unseal_keys_b64[]' vault_init.json)
+  ROOT_TOKEN=$(jq -r '.root_token' vault_init.json)
 
-# Wait for Vault to start
-echo "Waiting for Vault to start..."
-sleep 10
+  echo "Unsealing Vault..."
+  for key in $UNSEAL_KEYS; do
+    vault operator unseal $key || true
+  done
 
-# Set environment variables
-export VAULT_ADDR="https://0.0.0.0:8200"
-export VAULT_CACERT="$TLS_DIR/tls.crt"
-
-# Check if already initialized
-if vault status | grep -q "Initialized.*false"; then
-    echo "Initializing Vault..."
-    INIT_OUTPUT=$(vault operator init -key-shares=5 -key-threshold=3 -format=json)
-    echo $INIT_OUTPUT > /vault/init_output.json
-
-    UNSEAL_KEYS=$(echo $INIT_OUTPUT | jq -r '.unseal_keys_b64[]')
-    ROOT_TOKEN=$(echo $INIT_OUTPUT | jq -r '.root_token')
-
-    # Auto-unseal with first 3 keys
-    for key in $(echo $UNSEAL_KEYS | head -3); do
-        vault operator unseal $key
-    done
-
-    # Save root token
-    echo $ROOT_TOKEN > /vault/.vault_root_token
-    echo "Vault initialized and unsealed. Root token saved to /vault/.vault_root_token"
+  echo "Vault initialized and unsealed."
+  echo "Root Token: $ROOT_TOKEN"
 else
-    echo "Vault already initialized."
+  echo "Vault is already initialized."
 fi
-
-# Keep container running
-tail -f /dev/null
