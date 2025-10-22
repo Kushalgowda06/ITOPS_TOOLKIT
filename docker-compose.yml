@@ -10,4 +10,6 @@ services:
     volumes:
       - ./tls:/vault/certs
       - ./vault_data:/vault/data
+    environment:
+      VAULT_ADDR: "https://0.0.0.0:8200"
     command: /vault/init_vault.sh
