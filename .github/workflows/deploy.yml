@@ -11,15 +11,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    # -------------------------------
-    # 1️⃣ Checkout code
-    # -------------------------------
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # -------------------------------
-    # 2️⃣ Configure AWS credentials
-    # -------------------------------
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
@@ -27,56 +21,36 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
         aws-region: ${{ secrets.AWS_REGION_RELEASE }}
 
-    # -------------------------------
-    # 3️⃣ Copy Vault setup files to EC2
-    # -------------------------------
     - name: Copy Vault setup files to EC2
       run: |
-        # Create private key file and set permissions
         echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
         chmod 600 ec2_key.pem
-        
-        # Ensure the target directory exists on EC2 before copying
+
         ssh -i ec2_key.pem -o StrictHostKeyChecking=no \
           ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-          "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy"
+          "mkdir -p ~/vault-deploy"
 
-        echo "---- Copying Vault build and config files ----"
-
-        # ✅ Copy Dockerfile (in vault_setup)
         scp -i ec2_key.pem -o StrictHostKeyChecking=no \
           ITOpsToolokit_Backend/vault_setup/Dockerfile \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/Dockerfile
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:~/vault-deploy/Dockerfile
 
-        # ✅ Copy docker-compose.yml (from repo root)
         scp -i ec2_key.pem -o StrictHostKeyChecking=no \
           docker-compose.yml \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/docker-compose.yml
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:~/vault-deploy/docker-compose.yml
 
-        # ✅ Copy Vault configuration and initialization script
         scp -i ec2_key.pem -o StrictHostKeyChecking=no \
           ITOpsToolokit_Backend/vault_setup/vault.hcl \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/vault.hcl
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:~/vault-deploy/vault.hcl
 
         scp -i ec2_key.pem -o StrictHostKeyChecking=no \
           ITOpsToolokit_Backend/vault_setup/init_vault.sh \
-          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/init_vault.sh
+          ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:~/vault-deploy/init_vault.sh
 
-        # ✅ Optional: Copy TLS directory only if pre-generated locally
-        # Uncomment below if using gen_tls.sh
-        # scp -r -i ec2_key.pem -o StrictHostKeyChecking=no \
-        #   ITOpsToolokit_Backend/vault_setup/tls \
-        #   ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault-deploy/
-
-    # -------------------------------
-    # 4️⃣ Deploy Vault on EC2
-    # -------------------------------
     - name: Deploy Vault container on EC2
       run: |
-        ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+        ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} <<EOF
           echo "---- Starting Vault Deployment ----"
 
-          # Install Docker if missing
           if ! command -v docker &> /dev/null; then
             echo "Installing Docker..."
             sudo apt-get update -y && sudo apt-get install -y docker.io
@@ -84,27 +58,26 @@ jobs:
             sudo systemctl start docker
           fi
 
-          # Install Docker Compose if missing
           if ! docker compose version &> /dev/null; then
             echo "Installing Docker Compose..."
             sudo curl -L "https://github.com/docker/compose/releases/download/v2.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
             sudo chmod +x /usr/local/bin/docker-compose
           fi
 
-          # Install Vault CLI if missing
           if ! command -v vault &> /dev/null; then
             echo "Installing Vault CLI..."
             sudo apt-get update -y
             sudo apt-get install -y gnupg software-properties-common curl
             curl -fsSL https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com \$(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-            sudo apt update && sudo apt install vault -y
+            DISTRO_CODENAME=$(lsb_release -cs)
+            echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com ${DISTRO_CODENAME} main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
+            sudo apt update && sudo apt install -y vault
           fi
 
           cd ~/vault-deploy
 
           echo "Cleaning up any old Vault containers..."
-          docker rm -f \$(docker ps -aq --filter name=vault) || true
+          docker rm -f $(docker ps -aq --filter name=vault) || true
 
           echo "Building Vault container..."
           docker compose build
@@ -116,7 +89,6 @@ jobs:
           sleep 10
 
           echo "Running Vault initialization script..."
-          # ✅ Safer command - no need to know container ID
           docker compose exec vault /vault/init_vault.sh || true
 
           echo "Vault container status:"
@@ -128,9 +100,6 @@ jobs:
           echo "---- Vault Deployment Complete ----"
         EOF
 
-    # -------------------------------
-    # 5️⃣ Cleanup
-    # -------------------------------
     - name: Clean up EC2 Key
       if: always()
       run: rm -f ec2_key.pem
