@@ -1,19 +1,12 @@
 services:
   vault:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: vault-deploy-vault
+    image: vault-deploy-vault
+    container_name: vault-deploy-vault-1
     ports:
       - "8200:8200"
       - "8201:8201"
     volumes:
-      - vault_data:/vault/file
-      - ./vault.hcl:/vault/config/vault.hcl
-      - ./tls:/vault/certs
+      - ./file:/vault/file
+      - ./logs:/vault/logs
+      - ./certs:/vault/certs
     restart: unless-stopped
-    environment:
-      VAULT_ADDR: http://0.0.0.0:8200
-
-volumes:
-  vault_data:
