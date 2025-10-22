@@ -13,4 +13,4 @@ services:
     cap_add:
       - IPC_LOCK
     volumes:
-      - ./ITOpsToolokit_Backend/vault_setup/tls:/opt/vault/tls
+      - ./vault-deploy/tls/tls:/opt/vault/tls
