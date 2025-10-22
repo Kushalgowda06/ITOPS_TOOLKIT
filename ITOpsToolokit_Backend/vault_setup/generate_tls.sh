@@ -2,16 +2,23 @@
 set -e
 
 CERT_DIR="/opt/vault/tls"
-mkdir -p $CERT_DIR
-cd $CERT_DIR
+mkdir -p "$CERT_DIR"
+cd "$CERT_DIR"
 
-# Fetch EC2 public IP (fallback to localhost if unavailable)
-EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || echo "127.0.0.1")
+# Try to fetch EC2 public IP; fallback to 127.0.0.1 if empty
+EC2_IP=$(curl -s http://169.254.169.254/latest/meta-data/public-ipv4 || true)
+if [ -z "$EC2_IP" ]; then
+    EC2_IP="127.0.0.1"
+fi
 
-# Generate self-signed certificate with SANs
-openssl req -out tls.crt -new -keyout tls.key -newkey rsa:4096 -nodes -sha256 -x509 \
+echo "Using IP: $EC2_IP for TLS certificate"
+
+# Generate self-signed certificate with SAN
+openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+  -keyout tls.key -out tls.crt \
   -subj "/O=Company/CN=VaultServer" \
-  -addext "subjectAltName = IP:${EC2_IP},IP:127.0.0.1,DNS:localhost" \
-  -days 365
+  -addext "subjectAltName = IP:${EC2_IP},IP:127.0.0.1,DNS:localhost"
 
-chown -R 1000:1000 $CERT_DIR
+chown -R 1000:1000 "$CERT_DIR"
+
+echo "TLS certificate generated successfully at $CERT_DIR"
