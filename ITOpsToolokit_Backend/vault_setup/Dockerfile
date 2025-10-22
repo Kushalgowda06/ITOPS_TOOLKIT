@@ -1,21 +1,18 @@
-# -----------------------------------------------
-# Vault Dockerfile - Production-ready
-# -----------------------------------------------
+# Use Hashicorp Vault official image
 FROM hashicorp/vault:latest
 
 # Create Vault directories
-RUN mkdir -p /vault/config /vault/certs /vault/data /vault/logs
+RUN mkdir -p /vault/config /vault/data /vault/certs /vault/logs
 
-# Copy Vault config and scripts
+# Copy configuration and init script
 COPY vault.hcl /vault/config/vault.hcl
-COPY generate_tls.sh /vault/generate_tls.sh
 COPY init_vault.sh /vault/init_vault.sh
 
-# Set execute permissions
-RUN chmod +x /vault/init_vault.sh /vault/generate_tls.sh
+# Make init script executable
+RUN chmod +x /vault/init_vault.sh
 
 # Expose Vault ports
 EXPOSE 8200 8201
 
-# Run initialization script as entrypoint
+# Run initialization script
 ENTRYPOINT ["/vault/init_vault.sh"]
