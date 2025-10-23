@@ -9,19 +9,14 @@ services:
       - "8200:8200"
     environment:
       VAULT_ADDR: "http://0.0.0.0:8200"
-      VAULT_LOCAL_CONFIG: |
-        {
-          "backend": {
-            "file": { "path": "/vault/file" }
-          },
-          "listener": {
-            "tcp": { "address": "0.0.0.0:8200", "tls_disable": 1 }
-          },
-          "default_lease_ttl": "168h",
-          "max_lease_ttl": "720h"
-        }
     volumes:
       - vault-deploy_vault-data:/vault/file
+      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/config/vault.hcl  # Correct path for the Vault config
+      - ./ITOpsToolokit_Backend/vault_setup/tls:/vault/certs  # Mounting TLS certificates
+      - ./ITOpsToolokit_Backend/vault_setup/generate_tls.sh:/vault/generate_tls.sh  # Mount the script
+      - ./ITOpsToolokit_Backend/vault_setup/init.json:/vault/init.json
+
+    command: ["sh", "/vault/generate_tls.sh", "&&", "vault", "server", "-config=/vault/config/vault.hcl"]
 
 volumes:
   vault-deploy_vault-data:
