@@ -5,6 +5,8 @@ WORKDIR /vault
 
 USER root
 
+RUN mkdir -p /vault/config
+
 # Install required packages with apk (Alpine)
 RUN apk add --no-cache bash openssl jq curl
 
