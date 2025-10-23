@@ -11,10 +11,10 @@ services:
       VAULT_ADDR: "http://0.0.0.0:8200"
     volumes:
       - vault-deploy_vault-data:/vault/file
-      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/config/vault.hcl  # Correct path for the Vault config
-      - ./ITOpsToolokit_Backend/vault_setup/tls:/vault/certs  # Mounting TLS certificates
-      - ./ITOpsToolokit_Backend/vault_setup/generate_tls.sh:/vault/generate_tls.sh  # Mount the script
-      - ./ITOpsToolokit_Backend/vault_setup/init.json:/vault/init.json
+      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/config/vault.hcl  # Corrected mount for vault.hcl
+      - ./ITOpsToolokit_Backend/vault_setup/tls:/vault/tls  # Corrected mount for TLS certificates
+      - ./ITOpsToolokit_Backend/vault_setup/generate_tls.sh:/vault/generate_tls.sh  # Mount the generate_tls.sh script
+      - ./ITOpsToolokit_Backend/vault_setup/init.json:/vault/init.json  # Mount init.json if required
 
     command: ["sh", "/vault/generate_tls.sh", "&&", "vault", "server", "-config=/vault/config/vault.hcl"]
 
