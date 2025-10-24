@@ -5,10 +5,10 @@ CERT_DIR="/opt/vault/tls"
 mkdir -p "$CERT_DIR"
 cd "$CERT_DIR"
 
-# Use the server's private IP directly
+# Use server private IP directly
 SERVER_IP="172.31.17.17"
 
-echo "Using IP: $SERVER_IP for TLS certificate"
+echo "Generating TLS certificate with IP: $SERVER_IP..."
 
 # Generate self-signed certificate with SAN
 openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
@@ -17,5 +17,4 @@ openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
   -addext "subjectAltName = IP:${SERVER_IP},IP:127.0.0.1,DNS:localhost"
 
 chown -R 1000:1000 "$CERT_DIR"
-
-echo "TLS certificate generated successfully at $CERT_DIR"
+echo "TLS certificate generated at $CERT_DIR"
