@@ -1,21 +1,34 @@
 #!/bin/bash
 set -e
 
-TLS_DIR="/opt/vault/tls"
-mkdir -p "$TLS_DIR"
-cd "$TLS_DIR"
+CERT_DIR="/opt/vault/tls"
+mkdir -p "$CERT_DIR"
 
-# IPs for certificate SAN
-PUBLIC_IP="3.6.96.101"
-PRIVATE_IP="172.31.17.17"
+# Add your server's IPs
+IP_LIST=("3.6.96.101" "172.31.17.17" "127.0.0.1")
 
-echo "Generating TLS certificate with IPs: $PUBLIC_IP, $PRIVATE_IP, 127.0.0.1"
+# Only generate if cert/key don't exist
+if [ ! -f "$CERT_DIR/tls.crt" ] || [ ! -f "$CERT_DIR/tls.key" ]; then
+    SAN=""
 
-openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
-  -keyout tls.key -out tls.crt \
-  -subj "/O=Company/CN=VaultServer" \
-  -addext "subjectAltName = IP:${PUBLIC_IP},IP:${PRIVATE_IP},IP:127.0.0.1,DNS:localhost"
+    for ip in "${IP_LIST[@]}"; do
+        SAN+="IP:${ip},"
+    done
 
-chown -R 1000:1000 "$TLS_DIR"
+    # Remove trailing comma
+    SAN=${SAN%,}
 
-echo "TLS certificate generated successfully at $TLS_DIR"
+    echo "Generating TLS certificate with IPs: ${IP_LIST[*]}"
+
+    openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
+        -keyout "$CERT_DIR/tls.key" \
+        -out "$CERT_DIR/tls.crt" \
+        -subj "/O=Company/CN=VaultServer" \
+        -addext "subjectAltName=${SAN}"
+
+    chown -R 1000:1000 "$CERT_DIR"
+
+    echo "TLS certificate generated successfully at $CERT_DIR"
+else
+    echo "TLS certificates already exist, skipping generation."
+fi
