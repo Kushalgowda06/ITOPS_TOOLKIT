@@ -2,7 +2,7 @@
 set -e
 
 # Paths
-VAULT_CONFIG="/vault/config/vault.hcl"
+VAULT_CONFIG="/vault/vault.hcl"
 TLS_DIR="/opt/vault/tls"
 
 # Wait until TLS certs exist
