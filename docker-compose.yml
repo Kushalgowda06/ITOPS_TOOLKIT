@@ -10,20 +10,15 @@ services:
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
-      # Vault configuration file
+      # Vault config
       - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl
       # TLS certs
       - /home/ubuntu/vault_setup/tls:/opt/vault/tls
-      # Vault storage
+      # Vault persistent data
       - vault-data:/opt/vault/data
-    command: >
-      sh -c "
-        while [ ! -f /opt/vault/tls/tls.crt ]; do
-          echo 'Waiting for TLS certificate...'
-          sleep 2
-        done
-        exec vault server -config=/vault/config/vault.hcl
-      "
+      # Vault init script
+      - /home/ubuntu/vault_setup/init_vault.sh:/vault/init_vault.sh
+    command: ["/bin/bash", "/vault/init_vault.sh"]
 
 volumes:
   vault-data:
