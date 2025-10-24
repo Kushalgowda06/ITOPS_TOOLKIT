@@ -10,7 +10,7 @@ services:
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
-      - ./vault.hcl:/vault/config/vault.hcl
+      - ./vault.hcl:/vault/vault.hcl
       - ./generate_tls.sh:/vault/generate_tls.sh
       - vault-data:/opt/vault/data
       - ./tls:/opt/vault/tls
