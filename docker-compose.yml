@@ -11,8 +11,9 @@ services:
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
-      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl
-      - /home/ubuntu/vault_setup/tls:/opt/vault/tls
+      # Mount your config and TLS files
+      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl:ro
+      - /home/ubuntu/vault_setup/tls:/opt/vault/tls:ro
       - vault-data:/opt/vault/data
 
 volumes:
