@@ -7,12 +7,15 @@ services:
     restart: unless-stopped
     ports:
       - "8200:8200"
-    entrypoint: ["/vault/init_vault.sh"]
+    command: "/vault/init_vault.sh"
+    environment:
+      VAULT_ADDR: "https://3.6.96.101:8200"  # Use your public IP
     volumes:
-      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl
-      - /home/ubuntu/vault_setup/tls:/opt/vault/tls
-      - /home/ubuntu/vault_setup/init_vault.sh:/vault/init_vault.sh
-      - /home/ubuntu/vault_setup/generate_tls.sh:/vault/setup/generate_tls.sh
+      # Mount Vault config
+      - /home/ubuntu/vault_setup/vault.hcl:/vault/vault.hcl
+      # Mount TLS generation script
+      - /home/ubuntu/vault_setup/generate_tls.sh:/vault/generate_tls.sh
+      # Mount data directory
       - vault-data:/opt/vault/data
 
 volumes:
