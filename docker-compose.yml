@@ -7,12 +7,11 @@ services:
     restart: unless-stopped
     ports:
       - "8200:8200"
-    command: "vault server -config=/vault/config/vault.hcl"
+    command: "vault server -config=/vault/vault.hcl"
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
-      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl
-      - /home/ubuntu/vault_setup/tls:/opt/vault/tls
+      - /home/ubuntu/vault_setup:/vault
       - vault-data:/opt/vault/data
 
 volumes:
