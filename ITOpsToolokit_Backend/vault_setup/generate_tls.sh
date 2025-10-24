@@ -5,11 +5,11 @@ CERT_DIR="/opt/vault/tls"
 mkdir -p "$CERT_DIR"
 cd "$CERT_DIR"
 
-# Use fixed EC2 IP
-EC2_IP="3.6.96.101"
+# Use private IP directly
+EC2_IP="172.31.17.17"
 echo "Using IP: $EC2_IP for TLS certificate"
 
-# Generate self-signed certificate with SAN
+# Generate self-signed certificate with valid SAN
 openssl req -x509 -newkey rsa:4096 -sha256 -days 365 -nodes \
   -keyout tls.key -out tls.crt \
   -subj "/O=Company/CN=VaultServer" \
