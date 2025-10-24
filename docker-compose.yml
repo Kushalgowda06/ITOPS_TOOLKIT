@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   vault:
-    image: vault:1.15.0
+    image: hashicorp/vault:latest
     container_name: vault
     restart: unless-stopped
     ports:
@@ -11,9 +11,8 @@ services:
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
-      # Mount your config and TLS files
-      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl:ro
-      - /home/ubuntu/vault_setup/tls:/opt/vault/tls:ro
+      - /home/ubuntu/vault_setup/vault.hcl:/vault/config/vault.hcl
+      - /home/ubuntu/vault_setup/tls:/opt/vault/tls
       - vault-data:/opt/vault/data
 
 volumes:
