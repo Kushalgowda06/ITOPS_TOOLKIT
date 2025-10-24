@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     ports:
       - "8200:8200"
-    command: "vault server -config=/vault/vault.hcl"
+    command: "/vault/init_vault.sh"
     environment:
       VAULT_ADDR: "https://0.0.0.0:8200"
     volumes:
