@@ -1,54 +1,50 @@
 #!/bin/bash
 set -e
 
-echo "**** Starting Vault Deployment ****"
+VAULT_CONFIG_FILE="/vault/vault.hcl"
+VAULT_LOG_FILE="/vault/vault.log"
+VAULT_INIT_FILE="/vault/init.json"
+VAULT_TOKEN_FILE="/vault/.vault_token"
 
-# Set Vault environment variables
+# Start Vault server in background
+echo "Starting Vault server..."
+vault server -config="$VAULT_CONFIG_FILE" > "$VAULT_LOG_FILE" 2>&1 &
+VAULT_PID=$!
+
 export VAULT_ADDR="https://127.0.0.1:8200"
 export VAULT_CACERT="/opt/vault/tls/tls.crt"
 
-# Start Vault server in background
-vault server -config=/vault/config/vault.hcl > /vault/vault.log 2>&1 &
-VAULT_PID=$!
-
-# Wait until Vault is ready
-echo "Waiting for Vault to become ready..."
+# Wait for Vault to be ready
 RETRIES=30
 until vault status &>/dev/null; do
-    if [ $RETRIES -le 0 ]; then
-        echo "Vault failed to start. Check logs:"
-        cat /vault/vault.log
-        kill $VAULT_PID 2>/dev/null || true
-        exit 1
-    fi
+    ((RETRIES--))
+    [ $RETRIES -le 0 ] && { cat "$VAULT_LOG_FILE"; kill $VAULT_PID; exit 1; }
     echo "Vault is not ready yet. Retrying in 2 seconds..."
     sleep 2
-    ((RETRIES--))
 done
 
-echo "Vault is up and running!"
+echo "Vault is ready!"
 
-# Initialize Vault if not already initialized
+# Initialize Vault if not initialized
 if ! vault status | grep -q 'Initialized.*true'; then
-    echo "Initializing Vault..."
-    vault operator init -key-shares=5 -key-threshold=3 -format=json > /vault/init.json
+    vault operator init -key-shares=5 -key-threshold=3 -format=json > "$VAULT_INIT_FILE"
 fi
 
-# Unseal Vault if sealed
+# Unseal Vault
 if vault status | grep -q 'Sealed.*true'; then
-    echo "Unsealing Vault..."
     for i in 0 1 2; do
-        KEY=$(jq -r ".unseal_keys_b64[$i]" /vault/init.json)
+        KEY=$(jq -r ".unseal_keys_b64[$i]" "$VAULT_INIT_FILE")
         vault operator unseal "$KEY"
     done
 fi
 
-ROOT_TOKEN=$(jq -r '.root_token' /vault/init.json)
-echo "$ROOT_TOKEN" > /vault/.vault_token
+# Save root token
+jq -r '.root_token' "$VAULT_INIT_FILE" > "$VAULT_TOKEN_FILE"
+echo "Root token saved at $VAULT_TOKEN_FILE"
 
-echo "Vault Deployment Complete"
-echo "Root Token saved to /vault/.vault_token"
-echo "Root Token: $ROOT_TOKEN"
+# Stop temporary background server
+kill $VAULT_PID
+sleep 2
 
-# Keep Vault running in foreground
-wait $VAULT_PID
+# Launch Vault in foreground
+exec vault server -config="$VAULT_CONFIG_FILE"
