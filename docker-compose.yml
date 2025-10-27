@@ -2,23 +2,28 @@ version: "3.8"
 
 services:
   vault:
-    image: hashicorp/vault:latest
+    build:
+      context: ./ITOpsToolokit_Backend/vault_setup
+      dockerfile: Dockerfile
+    image: local/vault-custom:1.14
     container_name: vault
     restart: unless-stopped
     ports:
       - "8200:8200"
+      - "8201:8201"
     environment:
-      VAULT_ADDR: "https://0.0.0.0:8200"
+      # Set advertised addresses
+      VAULT_API_ADDR: "https://0.0.0.0:8200"
+      VAULT_CLUSTER_ADDR: "https://0.0.0.0:8201"
+      # Control TLS SANs
+      TLS_IPS: "127.0.0.1"
+      TLS_DNS: "localhost"
+      TLS_CN: "localhost"
     volumes:
-      - ./vault.hcl:/vault/vault.hcl
-      - ./generate_tls.sh:/vault/generate_tls.sh
+      - ./ITOpsToolikit_Backend/vault_setup/vault.hcl:/vault/vault.hcl:ro
       - vault-data:/opt/vault/data
-      - ./tls:/opt/vault/tls
-    command: >
-      sh -c "
-      /vault/generate_tls.sh &&
-      vault server -config=/vault/vault.hcl
-      "
+      - vault-tls:/opt/vault/tls
 
 volumes:
   vault-data:
+  vault-tls:
