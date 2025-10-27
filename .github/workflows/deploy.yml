@@ -35,7 +35,17 @@ jobs:
           scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
             ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault_setup/
 
-      # Step 4: Build & deploy Vault container
+      # Step 4: Ensure Docker volumes exist on EC2
+      - name: Docker volume setup on EC2
+        run: |
+          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+            docker volume inspect vault-data >/dev/null 2>&1 || docker volume create vault-data
+            docker volume inspect vault-tls >/dev/null 2>&1 || docker volume create vault-tls
+          EOF
+
+      # Step 5: Build & deploy Vault container
       - name: Build & Run Vault on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
@@ -59,24 +69,34 @@ jobs:
 
             echo "---- Cleaning old Vault containers ----"
             docker rm -f vault || true
-            docker rmi vault:latest || true
-            docker image prune -af
+            docker image prune -af || true
 
-            echo "---- Building Vault container ----"
-            # Ensure the build context is correct
-            docker build -t vault .
+            echo "---- Building Vault container image ----"
+            docker build -t local/vault-custom:1.14 /home/${{ secrets.EC2_USER_RELEASE }}/vault_setup
 
             echo "---- Starting Vault container ----"
-            # Install dependencies inside container and mount scripts
             docker run -d \
               --name vault \
+              --restart unless-stopped \
+              -e VAULT_API_ADDR="https://0.0.0.0:8200" \
+              -e VAULT_CLUSTER_ADDR="https://0.0.0.0:8201" \
+              -e TLS_IPS="${{ secrets.VAULT_TLS_IPS }}" \
+              -e TLS_DNS="${{ secrets.VAULT_TLS_DNS }}" \
+              -e TLS_CN="${{ secrets.VAULT_TLS_CN }}" \
               -p 8200:8200 -p 8201:8201 \
-              vault /bin/bash -c "apt-get update && apt-get install -y openssl jq && /vault/init_vault.sh"
+              -v vault-data:/opt/vault/data \
+              -v vault-tls:/opt/vault/tls \
+              local/vault-custom:1.14
+
+            echo "---- Waiting for Vault logs ----"
+            sleep 3
 
             echo "---- Vault Deployment Complete ----"
             docker ps -a
             docker logs vault || echo "Vault container not found or failed to start."
           EOF
+
+      
 
       # Step 5: Clean up EC2 key
       - name: Remove EC2 private key

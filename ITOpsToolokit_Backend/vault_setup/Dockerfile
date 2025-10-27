@@ -7,8 +7,16 @@ USER root
 
 RUN mkdir -p /vault/config
 
-# Install required packages with apk (Alpine)
-RUN apk add --no-cache bash openssl jq curl
+# Install required packages (image is Debian-based)
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends \
+      bash \
+      ca-certificates \
+      curl \
+      jq \
+      openssl; \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy Vault configuration and scripts
 COPY vault.hcl /vault/vault.hcl
