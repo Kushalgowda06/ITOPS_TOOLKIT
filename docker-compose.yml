@@ -25,7 +25,10 @@ services:
       - vault-tls:/opt/vault/tls
 
   postgres:
-    image: pgvector/pgvector:pg16
+    build:
+      context: ./ITOpsToolokit_Backend/db_setup
+      dockerfile: Dockerfile
+    image: local/postgres-custom:pg16-vector
     container_name: postgres
     restart: unless-stopped
     environment:
@@ -36,7 +39,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./ITOpsToolokit_Backend/database/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
 
 volumes:
   vault-data:
