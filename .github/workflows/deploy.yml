@@ -58,7 +58,7 @@ jobs:
             docker volume inspect postgres-data >/dev/null 2>&1 || docker volume create postgres-data
           EOF
 
-      # Step 5: Build & deploy Vault container
+      # Step 5: Build & Run Vault on EC2
       - name: Build & Run Vault on EC2
         run: |
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
@@ -115,7 +115,6 @@ jobs:
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
             echo "---- Starting Postgres Deployment ----"
 
-            # Install Docker if missing
             if ! command -v docker &> /dev/null; then
               sudo apt-get update -y
               sudo apt-get install -y docker.io
@@ -125,15 +124,11 @@ jobs:
 
             cd ~
 
-            echo "---- Cleaning old Postgres containers ----"
             docker rm -f postgres || true
-            # Do not aggressively prune all images here; only remove dangling to avoid surprises
             docker image prune -f || true
 
-            echo "---- Building Postgres container image ----"
             docker build -t local/postgres-custom:pg16-vector /home/${{ secrets.EC2_USER_RELEASE }}/db_setup
 
-            echo "---- Starting Postgres container ----"
             docker run -d \
               --name postgres \
               --restart unless-stopped \
@@ -144,7 +139,6 @@ jobs:
               -v postgres-data:/var/lib/postgresql/data \
               local/postgres-custom:pg16-vector
 
-            echo "---- Waiting for Postgres readiness ----"
             for i in {1..30}; do
               if docker exec postgres pg_isready -U postgres >/dev/null 2>&1; then
                 echo "Postgres is ready"; break
@@ -157,9 +151,51 @@ jobs:
             docker logs --tail 200 postgres || echo "Postgres container not found or failed to start."
           EOF
 
-      
 
-      # Step 5: Clean up EC2 key
+      # ✅ Step 7a: Copy Frontend files to EC2
+      - name: Copy Frontend setup files
+        run: |
+          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
+            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup"
+
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolikit_Frontend/* \
+            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup/
+
+      # ✅ Step 7b: Build & Run Frontend on EC2
+      - name: Build & Run Frontend on EC2
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+            echo "---- Starting Frontend Deployment ----"
+
+            if ! command -v docker &> /dev/null; then
+              sudo apt-get update -y
+              sudo apt-get install -y docker.io
+              sudo systemctl enable docker
+              sudo systemctl start docker
+            fi
+
+            cd ~/frontend_setup
+
+            docker rm -f frontend || true
+            docker image prune -f || true
+
+            docker build -t local/frontend-custom:latest .
+
+            docker run -d \
+              --name frontend \
+              --restart unless-stopped \
+              -p 80:80 \
+              local/frontend-custom:latest
+
+            echo "---- Frontend Deployment Complete ----"
+            docker ps -a | grep frontend || true
+          EOF
+
+
+      # Step 8: Clean up EC2 key
       - name: Remove EC2 private key
         if: always()
         run: rm -f ec2_key.pem
