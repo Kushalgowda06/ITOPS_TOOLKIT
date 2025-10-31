@@ -53,10 +53,14 @@ services:
     container_name: frontend
     restart: unless-stopped
     ports:
-      - "3000:80"   # React app served on localhost:3000
+      - "80:80"
+      - "443:443"
     depends_on:
       - postgres
       - vault
+    volumes:
+      - ./ITOpsToolokit_Frontend/certs:/etc/nginx/certs:ro
+
 
 volumes:
   vault-data:
