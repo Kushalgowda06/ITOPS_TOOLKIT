@@ -161,7 +161,7 @@ jobs:
           ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
             "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup"
 
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolikit_Frontend/* \
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Frontend/* \
             ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup/
 
       # ✅ Step 7b: Build & Run Frontend on EC2
