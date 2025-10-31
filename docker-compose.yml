@@ -45,6 +45,18 @@ services:
       timeout: 3s
       retries: 20
       start_period: 5s
+   frontend:
+    build:
+      context: ./ITOpsToolokit_Frontend
+      dockerfile: Dockerfile
+    image: local/itops-frontend:latest
+    container_name: frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"   # React app served on localhost:3000
+    depends_on:
+      - postgres
+      - vault
 
 volumes:
   vault-data:
