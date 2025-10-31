@@ -46,20 +46,19 @@ services:
       retries: 20
       start_period: 5s
    frontend:
-    build:
-      context: ./ITOpsToolokit_Frontend
-      dockerfile: Dockerfile
-    image: local/itops-frontend:latest
-    container_name: frontend
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    depends_on:
-      - postgres
-      - vault
-    volumes:
-      - ./ITOpsToolokit_Frontend/certs:/etc/nginx/certs:ro
+  build:
+    context: ./ITOpsToolokit_Frontend
+    dockerfile: Dockerfile
+  image: local/itops-frontend:latest
+  container_name: frontend
+  restart: unless-stopped
+  ports:
+    - "80:80"
+    - "443:443"
+  depends_on:
+    - postgres
+    - vault
+
 
 
 volumes:
