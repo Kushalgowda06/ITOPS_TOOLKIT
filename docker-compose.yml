@@ -24,40 +24,41 @@ services:
       - vault-data:/opt/vault/data
       - vault-tls:/opt/vault/tls
 
-  postgres:
-    build:
-      context: ./ITOpsToolokit_Backend/db_setup
-      dockerfile: Dockerfile
-    image: local/postgres-custom:pg16-vector
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: Postgres_2025
-      POSTGRES_DB: postgres
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1 -p 5432"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 5s
-   frontend:
-  build:
-    context: ./ITOpsToolokit_Frontend
-    dockerfile: Dockerfile
-  image: local/itops-frontend:latest
-  container_name: frontend
-  restart: unless-stopped
-  ports:
-    - "80:80"
-    - "443:443"
-  depends_on:
-    - postgres
-    - vault
+    postgres:
+      build:
+        context: ./ITOpsToolokit_Backend/db_setup
+        dockerfile: Dockerfile
+      image: local/postgres-custom:pg16-vector
+      container_name: postgres
+      restart: unless-stopped
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: Postgres_2025
+        POSTGRES_DB: postgres
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres-data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres -h 127.0.0.1 -p 5432"]
+        interval: 5s
+        timeout: 3s
+        retries: 20
+        start_period: 5s
+
+    frontend:
+      build:
+        context: ./ITOpsToolokit_Frontend
+        dockerfile: Dockerfile
+      image: local/itops-frontend:latest
+      container_name: frontend
+      restart: unless-stopped
+      ports:
+        - "80:80"
+        - "443:443"
+      depends_on:
+        - postgres
+        - vault
 
 
 
