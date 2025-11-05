@@ -184,10 +184,15 @@ jobs:
 
             docker build -t local/frontend-custom:latest .
 
+            # Ensure no host service is holding ports 80/443
+            sudo systemctl stop nginx || true
+            sudo systemctl disable nginx || true
+
             docker run -d \
               --name frontend \
               --restart unless-stopped \
               -p 80:80 \
+              -p 443:443 \
               local/frontend-custom:latest
 
             echo "---- Frontend Deployment Complete ----"
