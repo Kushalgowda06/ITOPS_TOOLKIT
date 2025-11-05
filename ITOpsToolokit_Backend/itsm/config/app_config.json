@@ -1,5 +1,5 @@
 {
-        "vault_url": "http://172.31.14.219:8200",
+	"vault_url": "https://vault:8200",
         "snow_tag": "Platform_SNOW",
         "snow_url": "https://cisicmpengineering1.service-now.com",
 	"modules": {
@@ -14,7 +14,7 @@
 		"Recruit Assist": 1,
 		"Workflow Test Tool": 1
 	},
-    	"pg_db_host": "172.31.9.30",
+	"pg_db_host": "postgres",
 	"pg_db_name": "cfs_problem_tickets",
 	"kb_similarity_threshold_score": 0.2,
         "agents": {

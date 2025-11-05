@@ -45,6 +45,26 @@ services:
       timeout: 3s
       retries: 20
       start_period: 5s
+    backend:
+      build:
+        context: ./ITOpsToolokit_Backend
+        dockerfile: Dockerfile
+      image: local/itops-backend:latest
+      container_name: backend
+      restart: unless-stopped
+      environment:
+        PGHOST: postgres
+        PGDATABASE: cfs_problem_tickets
+        PGUSER: dbuser
+        PGPASSWORD: Password_2025
+        PGPORT: "5432"
+        VAULT_TOKEN: root
+        VAULT_URL: https://vault:8200
+      depends_on:
+        - postgres
+        - vault
+      ports:
+        - "8000:8000"
   frontend:
     build:
       context: ./ITOpsToolokit_Frontend
