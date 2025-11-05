@@ -1,4 +1,5 @@
 # Step 1: Build React app
+# Pin to Node 18 because Create React App fails to build reliably with Node 20+ (OpenSSL breaking change)
 FROM node:18-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
@@ -7,6 +8,7 @@ COPY . .
 RUN npm run build
 
 # Step 2: Serve with NGINX
+# 1.29-alpine is not published; stick to the latest stable 1.27 series for compatibility
 FROM nginx:1.27-alpine
 
 # Copy React build to NGINX html folder
