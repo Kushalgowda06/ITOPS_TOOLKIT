@@ -1,0 +1,7 @@
+__pycache__/
+*.py[cod]
+.git
+.github
+node_modules
+frontend_setup
+backend_setup

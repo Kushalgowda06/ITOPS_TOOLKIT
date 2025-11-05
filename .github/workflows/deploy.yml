@@ -152,48 +152,91 @@ jobs:
           EOF
 
 
-      # ✅ Step 7a: Copy Frontend files to EC2
-      - name: Copy Frontend setup files
-        run: |
-          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
+        # ✅ Step 7a: Copy Backend files to EC2
+        - name: Copy Backend setup files
+          run: |
+            echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+            chmod 600 ec2_key.pem
 
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup"
+            ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
+              "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/backend_setup"
 
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Frontend/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup/
+            scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/* \
+              ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/backend_setup/
 
-      # ✅ Step 7b: Build & Run Frontend on EC2
-      - name: Build & Run Frontend on EC2
-        run: |
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            echo "---- Starting Frontend Deployment ----"
+        # ✅ Step 7b: Build & Run Backend on EC2
+        - name: Build & Run Backend on EC2
+          run: |
+            ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+              echo "---- Starting Backend Deployment ----"
 
-            if ! command -v docker &> /dev/null; then
-              sudo apt-get update -y
-              sudo apt-get install -y docker.io
-              sudo systemctl enable docker
-              sudo systemctl start docker
-            fi
+              if ! command -v docker &> /dev/null; then
+                sudo apt-get update -y
+                sudo apt-get install -y docker.io
+                sudo systemctl enable docker
+                sudo systemctl start docker
+              fi
 
-            cd ~/frontend_setup
+              cd ~/backend_setup
 
-            docker rm -f frontend || true
-            docker image prune -f || true
+              docker rm -f backend || true
+              docker image prune -f || true
 
-            docker build -t local/frontend-custom:latest .
+              docker build -t local/backend-custom:latest .
 
-            # Ensure no host service is holding ports 80/443
-            sudo systemctl stop nginx || true
-            sudo systemctl disable nginx || true
+              docker run -d \
+                --name backend \
+                --restart unless-stopped \
+                -p 8000:8000 \
+                -e VAULT_TOKEN="${{ secrets.VAULT_TOKEN_RELEASE }}" \
+                local/backend-custom:latest
 
-            docker run -d \
-              --name frontend \
-              --restart unless-stopped \
-              -p 80:80 \
-              -p 443:443 \
-              local/frontend-custom:latest
+              echo "---- Backend Deployment Complete ----"
+              docker ps -a | grep backend || true
+            EOF
+
+        # ✅ Step 8a: Copy Frontend files to EC2
+        - name: Copy Frontend setup files
+          run: |
+            echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+            chmod 600 ec2_key.pem
+
+            ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
+              "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup"
+
+            scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Frontend/* \
+              ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup/
+
+        # ✅ Step 8b: Build & Run Frontend on EC2
+        - name: Build & Run Frontend on EC2
+          run: |
+            ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+              echo "---- Starting Frontend Deployment ----"
+
+              if ! command -v docker &> /dev/null; then
+                sudo apt-get update -y
+                sudo apt-get install -y docker.io
+                sudo systemctl enable docker
+                sudo systemctl start docker
+              fi
+
+              cd ~/frontend_setup
+
+              docker rm -f frontend || true
+              docker image prune -f || true
+
+              docker build -t local/frontend-custom:latest .
+
+              # Ensure no host service is holding ports 80/443
+              sudo systemctl stop nginx || true
+              sudo systemctl disable nginx || true
+
+              docker run -d \
+                --name frontend \
+                --restart unless-stopped \
+                -p 80:80 \
+                -p 443:443 \
+                local/frontend-custom:latest
 
             echo "---- Frontend Deployment Complete ----"
             docker ps -a | grep frontend || true

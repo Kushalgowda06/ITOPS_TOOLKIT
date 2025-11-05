@@ -46,6 +46,21 @@ services:
       retries: 20
       start_period: 5s
 
+  backend:
+    build:
+      context: ./ITOpsToolikit_Backend
+      dockerfile: Dockerfile
+    image: local/backend-custom:latest
+    container_name: backend
+    restart: unless-stopped
+    environment:
+      VAULT_TOKEN: ${VAULT_TOKEN:-}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - vault
+
   frontend:
     build:
       context: ./ITOpsToolikit_Frontend
@@ -59,6 +74,7 @@ services:
     depends_on:
       - postgres
       - vault
+      - backend
 
 volumes:
   vault-data:
