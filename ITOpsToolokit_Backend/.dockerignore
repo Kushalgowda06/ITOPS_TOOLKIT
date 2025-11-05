@@ -1,0 +1,9 @@
+__pycache__/
+**/__pycache__/
+*.pyc
+.git
+.gitignore
+llm_app_log.log
+*.pem
+DemoPlatform/
+train_assist_source_code/__pycache__/

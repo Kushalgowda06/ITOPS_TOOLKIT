@@ -1,14 +1,14 @@
 {
-    "vault_url": "https://localhost:8200",
-        "snow_tag": "Platform_SNOW",
-        "snow_url": "https://cisicmpengineering1.service-now.com",
-        "pg_db_host": "localhost",
-        "pg_db_name": "cfs_problem_tickets",
-        "pg_db_port": "5432",
-        "vector_dimention": 768,
-        "similarity_threshould": 0.5,
-        "api_version": "v1",
-	"ke_category_name":"Known Error",
-	"proxy_url":""
+  "vault_url": "https://vault:8200",
+  "snow_tag": "Platform_SNOW",
+  "snow_url": "https://cisicmpengineering1.service-now.com",
+  "pg_db_host": "postgres",
+  "pg_db_name": "cfs_problem_tickets",
+  "pg_db_port": "5432",
+  "vector_dimention": 768,
+  "similarity_threshould": 0.5,
+  "api_version": "v1",
+  "ke_category_name": "Known Error",
+  "proxy_url": ""
 }
 
