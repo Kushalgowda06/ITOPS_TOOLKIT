@@ -1,5 +1,5 @@
 # Step 1: Build React app
-FROM node:20-alpine AS build
+FROM node:18-alpine AS build
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm install
@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Step 2: Serve with NGINX
-FROM nginx:1.29-alpine
+FROM nginx:1.27-alpine
 
 # Copy React build to NGINX html folder
 COPY --from=build /app/build /usr/share/nginx/html
