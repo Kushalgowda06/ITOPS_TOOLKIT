@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       AWS_REGION: ${{ secrets.AWS_REGION_RELEASE }}
-      BACKEND_ECR_REPOSITORY: ${{ secrets.ECR_BACKEND_REPOSITORY }}
+      BACKEND_ECR_REPOSITORY: itops_images
       BACKEND_IMAGE_TAG: ${{ github.sha }}
 
     steps:
@@ -210,7 +210,7 @@ jobs:
             AWS_DEFAULT_REGION="${{ secrets.AWS_REGION_RELEASE }}" \\
             aws ecr get-login-password --region "${{ secrets.AWS_REGION_RELEASE }}" | docker login --username AWS --password-stdin ${{ steps.login-ecr.outputs.registry }}
 
-            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.sha }}
+            docker pull ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
 
             docker rm -f backend || true
 
@@ -218,7 +218,7 @@ jobs:
               --name backend \
               --restart unless-stopped \
               -p 8000:8000 \
-              ${{ steps.login-ecr.outputs.registry }}/${{ secrets.ECR_BACKEND_REPOSITORY }}:${{ github.sha }}
+              ${{ steps.login-ecr.outputs.registry }}/${{ env.BACKEND_ECR_REPOSITORY }}:${{ github.sha }}
 
             docker ps -a | grep backend || true
             docker logs --tail 200 backend || true
