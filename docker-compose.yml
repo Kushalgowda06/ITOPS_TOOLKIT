@@ -62,10 +62,18 @@ services:
       VAULT_TOKEN: root
       VAULT_URL: https://vault:8200
     depends_on:
-      - postgres
-      - vault
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_started
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
   frontend:
     build:
       context: ./ITOpsToolokit_Frontend
@@ -76,7 +84,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   vault-data:
