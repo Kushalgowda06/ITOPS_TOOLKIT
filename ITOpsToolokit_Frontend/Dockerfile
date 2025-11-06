@@ -12,15 +12,11 @@ FROM nginx:1.25-alpine
 # Copy React build to NGINX html folder
 COPY --from=build /app/build /usr/share/nginx/html
 
-# Copy custom nginx.conf
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy simple nginx.conf
+COPY nginx-simple.conf /etc/nginx/nginx.conf
 
-# Copy SSL certificates
-COPY certs/fullchain.pem /etc/ssl/certs/fullchain.pem
-COPY certs/privkey.pem /etc/ssl/certs/privkey.pem
-
-# Expose HTTP and HTTPS ports
-EXPOSE 80 443
+# Expose HTTP port only
+EXPOSE 80
 
 # Start NGINX in foreground
 CMD ["nginx", "-g", "daemon off;"]
