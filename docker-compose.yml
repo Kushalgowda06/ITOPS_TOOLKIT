@@ -1,6 +1,7 @@
 version: "3.8"
 
 services:
+  # Step 1: Vault (Foundation Service)
   vault:
     build:
       context: ./ITOpsToolokit_Backend/vault_setup
@@ -12,18 +13,23 @@ services:
       - "8200:8200"
       - "8201:8201"
     environment:
-      # Set advertised addresses
       VAULT_API_ADDR: "https://0.0.0.0:8200"
       VAULT_CLUSTER_ADDR: "https://0.0.0.0:8201"
-      # Control TLS SANs
       TLS_IPS: "127.0.0.1"
       TLS_DNS: "localhost"
       TLS_CN: "localhost"
     volumes:
-      - ./ITOpsToolikit_Backend/vault_setup/vault.hcl:/vault/vault.hcl:ro
+      - ./ITOpsToolokit_Backend/vault_setup/vault.hcl:/vault/vault.hcl:ro
       - vault-data:/opt/vault/data
       - vault-tls:/opt/vault/tls
+    healthcheck:
+      test: ["CMD", "vault", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
+  # Step 2: Postgres (Database Service)
   postgres:
     build:
       context: ./ITOpsToolokit_Backend/db_setup
@@ -39,8 +45,17 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      vault:
+        condition: service_healthy
 
-
+  # Step 3: Backend (API Service)
   backend:
     build:
       context: ./ITOpsToolokit_Backend
@@ -56,12 +71,21 @@ services:
       PGPORT: "5432"
       VAULT_TOKEN: root
       VAULT_URL: https://vault:8200
-    depends_on:
-      - postgres
-      - vault
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      vault:
+        condition: service_healthy
 
+  # Step 4: Frontend (Web Service)
   frontend:
     build:
       context: ./ITOpsToolokit_Frontend
@@ -72,7 +96,8 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
 
 volumes:
   vault-data:
