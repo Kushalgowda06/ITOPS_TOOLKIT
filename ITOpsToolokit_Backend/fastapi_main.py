@@ -1,7 +1,7 @@
 import secrets
 import uvicorn
 from fastapi.responses import JSONResponse
-from fastapi import Depends, FastAPI, Request
+from fastapi import Depends, FastAPI, Request, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -20,6 +20,10 @@ from knowledge_management.knowledge_assistant_routes import router as knowledge_
 
 app = FastAPI(docs = "/documentation", redoc_url = None)
 security = HTTPBasic()
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 # Replace with your actual frontend origin
 origins = [
@@ -40,7 +44,7 @@ origins = [
         "https://34.195.62.94:3000/",
         "https://34.195.62.94:3000",
         "http://34.195.62.94:3000/",
-        "http://34.195.62.94:3000"
+        "http://34.195.62.94:3000",
         "http://54.144.164.205:3001/",
         "http://54.144.164.205:3001",
         "http://56.155.15.80:3000",
