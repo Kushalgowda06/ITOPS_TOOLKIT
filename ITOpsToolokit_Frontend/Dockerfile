@@ -7,7 +7,7 @@ COPY . .
 RUN npm run build
 
 # Step 2: Serve with NGINX
-FROM nginx:1.29-alpine
+FROM nginx:1.25-alpine
 
 # Copy React build to NGINX html folder
 COPY --from=build /app/build /usr/share/nginx/html
