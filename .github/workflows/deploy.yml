@@ -152,7 +152,51 @@ jobs:
           EOF
 
 
-      # ✅ Step 7a: Copy Frontend files to EC2
+      # Step 7a: Copy Backend files to EC2
+      - name: Copy Backend setup files
+        run: |
+          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
+          chmod 600 ec2_key.pem
+
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
+            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/backend_setup"
+
+          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/* \
+            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/backend_setup/
+
+      # Step 7b: Build & Run Backend on EC2
+      - name: Build & Run Backend on EC2
+        run: |
+          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
+            echo "---- Starting Backend Deployment ----"
+
+            cd ~/backend_setup
+
+            docker rm -f backend || true
+            docker image prune -f || true
+
+            docker build -t local/itops-backend:latest .
+
+            docker run -d \
+              --name backend \
+              --restart unless-stopped \
+              --link postgres:postgres \
+              --link vault:vault \
+              -e PGHOST=postgres \
+              -e PGDATABASE=cfs_problem_tickets \
+              -e PGUSER=dbuser \
+              -e PGPASSWORD=Password_2025 \
+              -e PGPORT=5432 \
+              -e VAULT_TOKEN=root \
+              -e VAULT_URL=https://vault:8200 \
+              -p 8000:8000 \
+              local/itops-backend:latest
+
+            echo "---- Backend Deployment Complete ----"
+            docker ps -a | grep backend || true
+          EOF
+
+      # Step 8a: Copy Frontend files to EC2
       - name: Copy Frontend setup files
         run: |
           echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
@@ -187,6 +231,7 @@ jobs:
             docker run -d \
               --name frontend \
               --restart unless-stopped \
+              --link backend:backend \
               -p 80:80 \
               local/frontend-custom:latest
 
