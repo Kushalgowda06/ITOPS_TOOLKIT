@@ -3,8 +3,10 @@ email-validator==2.1.1
 hvac==2.4.0
 psycopg2==2.9.11
 pydantic==2.12.3
+PyJWT==2.10.1
 python-dotenv==1.2.1
 python-multipart==0.0.9
+redis==7.0.1
 requests==2.32.5
 SQLAlchemy==2.0.44
 uvicorn==0.38.0
