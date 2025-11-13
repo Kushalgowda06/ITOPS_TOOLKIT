@@ -1,253 +1,52 @@
-name: Deploy ITOps to EC2 - Structured Flow
+version: '3.8'
 
-on:
-  push:
-    branches:
-      - main
-      - release/*
+services:
+  vault:
+    build: ./ITOpsToolokit_Backend/vault_setup
+    container_name: itops-vault
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_DEV_ROOT_TOKEN_ID=root
+      - VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200
+    cap_add:
+      - IPC_LOCK
 
-jobs:
-  # Job 1: Deploy Vault (Foundation Service)
-  deploy-vault:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+  postgres:
+    build: ./ITOpsToolokit_Backend/db_setup
+    container_name: itops-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=Postgres_2025
+      - POSTGRES_DB=cfs_problem_tickets
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_RELEASE }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_RELEASE }}
-          aws-region: ${{ secrets.AWS_REGION_RELEASE }}
+  backend:
+    build: ./ITOpsToolokit_Backend
+    container_name: itops-backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - vault
+    environment:
+      - PGHOST=postgres
+      - PGUSER=postgres
+      - PGPASSWORD=Postgres_2025
+      - PGDATABASE=cfs_problem_tickets
+      - VAULT_URL=http://vault:8200
+      - VAULT_TOKEN=root
 
-      - name: Deploy Vault Service
-        run: |
-          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
+  frontend:
+    build: ./ITOpsToolokit_Frontend
+    container_name: itops-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
 
-          # Copy Vault files
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/vault_setup"
-
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/vault_setup/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/vault_setup/
-
-          # Deploy Vault
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            echo "=== DEPLOYING VAULT ==="
-            
-            # Install Docker
-            if ! command -v docker &> /dev/null; then
-              sudo apt-get update -y
-              sudo apt-get install -y docker.io
-              sudo systemctl enable docker
-              sudo systemctl start docker
-            fi
-
-            # Create volumes
-            docker volume create vault-data || true
-            docker volume create vault-tls || true
-
-            # Clean and deploy
-            docker rm -f vault || true
-            docker build -t local/vault-custom:1.14 ~/vault_setup
-            
-            docker run -d \
-              --name vault \
-              --restart unless-stopped \
-              -e VAULT_API_ADDR="https://0.0.0.0:8200" \
-              -e VAULT_CLUSTER_ADDR="https://0.0.0.0:8201" \
-              -e TLS_IPS="127.0.0.1" \
-              -e TLS_DNS="localhost" \
-              -e TLS_CN="localhost" \
-              -p 8200:8200 -p 8201:8201 \
-              -v vault-data:/opt/vault/data \
-              -v vault-tls:/opt/vault/tls \
-              local/vault-custom:1.14
-
-            sleep 5
-            echo "Vault Status:"
-            docker ps | grep vault || echo "Vault not running"
-          EOF
-
-          rm -f ec2_key.pem
-
-  # Job 2: Deploy Postgres (Database Service)
-  deploy-postgres:
-    runs-on: ubuntu-latest
-    needs: deploy-vault
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Postgres Service
-        run: |
-          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-          # Copy Postgres files
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/db_setup"
-
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/db_setup/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/db_setup/
-
-          # Deploy Postgres
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            echo "=== DEPLOYING POSTGRES ==="
-
-            # Create volume
-            docker volume create postgres-data || true
-
-            # Clean and deploy
-            docker rm -f postgres || true
-            docker build -t local/postgres-custom:pg16-vector ~/db_setup
-
-            docker run -d \
-              --name postgres \
-              --restart unless-stopped \
-              -e POSTGRES_USER=postgres \
-              -e POSTGRES_PASSWORD=Postgres_2025 \
-              -e POSTGRES_DB=postgres \
-              -p 5432:5432 \
-              -v postgres-data:/var/lib/postgresql/data \
-              local/postgres-custom:pg16-vector
-
-            # Wait for Postgres to be ready
-            for i in {1..30}; do
-              if docker exec postgres pg_isready -U postgres >/dev/null 2>&1; then
-                echo "Postgres is ready"; break
-              fi
-              echo "Waiting for Postgres... ($i/30)"
-              sleep 2
-            done
-
-            echo "Postgres Status:"
-            docker ps | grep postgres || echo "Postgres not running"
-          EOF
-
-          rm -f ec2_key.pem
-
-  # Job 3: Deploy Backend (API Service)
-  deploy-backend:
-    runs-on: ubuntu-latest
-    needs: [deploy-vault, deploy-postgres]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Backend Service
-        run: |
-          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-          # Copy Backend files
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/backend_setup"
-
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Backend/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/backend_setup/
-
-          # Deploy Backend
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            echo "=== DEPLOYING BACKEND ==="
-
-            cd ~/backend_setup
-
-            # Clean and deploy
-            docker rm -f backend || true
-            docker build -t local/itops-backend:latest .
-
-            docker run -d \
-              --name backend \
-              --restart unless-stopped \
-              --link postgres:postgres \
-              --link vault:vault \
-              -e PGHOST=postgres \
-              -e PGDATABASE=cfs_problem_tickets \
-              -e PGUSER=dbuser \
-              -e PGPASSWORD=Password_2025 \
-              -e PGPORT=5432 \
-              -e VAULT_TOKEN=root \
-              -e VAULT_URL=https://vault:8200 \
-              -p 8000:8000 \
-              local/itops-backend:latest
-
-            # Wait for Backend to be ready
-            sleep 10
-            for i in {1..20}; do
-              if curl -f http://localhost:8000/health >/dev/null 2>&1; then
-                echo "Backend is ready"; break
-              fi
-              echo "Waiting for Backend... ($i/20)"
-              sleep 3
-            done
-
-            echo "Backend Status:"
-            docker ps | grep backend || echo "Backend not running"
-            
-            # Show backend logs if not running
-            if ! docker ps | grep -q backend; then
-              echo "Backend Logs:"
-              docker logs backend 2>&1 || echo "No backend logs available"
-              exit 1
-            fi
-          EOF
-
-          rm -f ec2_key.pem
-
-  # Job 4: Deploy Frontend (Web Service)
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    needs: [deploy-vault, deploy-postgres, deploy-backend]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Deploy Frontend Service
-        run: |
-          echo "${{ secrets.EC2_KEY_RELEASE }}" > ec2_key.pem
-          chmod 600 ec2_key.pem
-
-          # Copy Frontend files
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} \
-            "mkdir -p /home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup"
-
-          scp -i ec2_key.pem -o StrictHostKeyChecking=no -r ITOpsToolokit_Frontend/* \
-            ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }}:/home/${{ secrets.EC2_USER_RELEASE }}/frontend_setup/
-
-          # Deploy Frontend
-          ssh -i ec2_key.pem -o StrictHostKeyChecking=no ${{ secrets.EC2_USER_RELEASE }}@${{ secrets.EC2_HOST_RELEASE }} << 'EOF'
-            echo "=== DEPLOYING FRONTEND ==="
-
-            cd ~/frontend_setup
-
-            # Verify backend is running
-            if ! docker ps | grep -q backend; then
-              echo "ERROR: Backend container is not running!"
-              echo "Cannot deploy frontend without backend."
-              exit 1
-            fi
-
-            # Clean and deploy
-            docker rm -f frontend || true
-            docker build -t local/frontend-custom:latest .
-
-            docker run -d \
-              --name frontend \
-              --restart unless-stopped \
-              --link backend:backend \
-              -p 80:80 \
-              local/frontend-custom:latest
-
-            sleep 5
-            echo "Frontend Status:"
-            docker ps | grep frontend || echo "Frontend not running"
-
-            echo "=== DEPLOYMENT COMPLETE ==="
-            echo "All Services Status:"
-            docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
-          EOF
-
-          rm -f ec2_key.pem
+volumes:
+  postgres_data:
