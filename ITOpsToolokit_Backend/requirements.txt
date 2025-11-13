@@ -5,7 +5,7 @@ hvac==2.4.0
 icecream==2.1.8
 langchain==1.0.3
 langchain_community==0.4.1
-langchain_google_vertexai==3.0.2
+langchain_google_vertexai==2.0.5
 langchain_huggingface==1.0.1
 langchain_openai==1.0.2
 loguru==0.7.3
@@ -26,4 +26,4 @@ starlette>=0.40.0,<0.50.0
 termcolor==3.2.0
 transformers==4.57.1
 uvicorn==0.38.0
-vertexai==1.71.1
+google-cloud-aiplatform==1.71.1
