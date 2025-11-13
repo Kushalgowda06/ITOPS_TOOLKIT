@@ -70,9 +70,10 @@ jobs:
             # Login to ECR
             aws ecr get-login-password --region ap-southeast-1 | sudo docker login --username AWS --password-stdin 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com
 
-            # Stop existing containers
-            sudo docker stop itops-frontend itops-backend itops-postgres itops-vault 2>/dev/null || true
-            sudo docker rm itops-frontend itops-backend itops-postgres itops-vault 2>/dev/null || true
+            # Stop and remove ALL containers using these ports
+            sudo docker stop $(sudo docker ps -q) 2>/dev/null || true
+            sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
+            sudo docker system prune -f
 
             # Create network
             sudo docker network create itops-network 2>/dev/null || true
