@@ -103,7 +103,7 @@ jobs:
 
             # Pull and run Frontend
             sudo docker pull 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-frontend:latest
-            sudo docker run -d --name itops-frontend --network itops-network -p 80:80 \
+            sudo docker run -d --name itops-frontend --network itops-network -p 80:80 -p 443:443 \
               361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-frontend:latest
 
             echo "=== DEPLOYMENT COMPLETE ==="
