@@ -20,15 +20,15 @@ export default function TrainPopupModal({ show, onClose, onSave, id }) {
     >
       <div className="prb_custom-modal p-3" ref={modalRef}>
         <div className="d-flex justify-content-start">
-          <span className="text-white mb-2 fw-bold fs-5 ">
+          <span className="text-white mb-2 fw-bold knowledge_card_title ">
             Quiz Successfully Generated
           </span>
         </div>
         <hr className="m-0"></hr>
-        <div className="mb-2">
-          <span className=" fw-bold fs-6">
-            Quiz Number: <b className="fw-bold">{id}</b>
-          </span>
+        <div className="mb-2 knowledge_card_p">
+        
+            Quiz Number: <span className="knowledge_card_title">{id}</span>
+         
         </div>
         <div className="d-flex align-items-center mb-3">
           <MdNotificationsIcon className="me-2 text-warning" size={16} />

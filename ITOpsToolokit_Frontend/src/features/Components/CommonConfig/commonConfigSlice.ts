@@ -11,6 +11,7 @@ export interface CommonConfigSlice {
   launchStackData: Array<any>;
   advisoryData: Array<any>;
   loginDetails: any;
+  hasKcLogout:any;
   usersApiData: Array<any>;
   userRolesApiData: Array<any>;
   filteredOrphanData: Array<any>;
@@ -70,6 +71,7 @@ const initialState: CommonConfigSlice = {
   launchStackData: [],
   advisoryData: [],
   loginDetails: { validation: false },
+  hasKcLogout: false,
   // loginDetails: { 'validation': false, 'currentUser': null },
   usersApiData: [],
   appBarDataset: null,
@@ -371,6 +373,9 @@ export const commonConfligSlice = createSlice({
     resetLoginDetails: (state) => {
       state.loginDetails = { validation: false };
     },
+    hasKClogout: (state , action) => {
+      state.hasKcLogout = action.payload;
+    },
     setLocalStorageUsers: (state, action) => {
       state.usersLocalStorage = action.payload;
     },
@@ -478,6 +483,7 @@ export const {
   setComplianceData,
   setActiveOnboarding,
   resetLoginDetails,
+  hasKClogout,
   setLocalStorageUsers,
   setDropdownsApi,
   setTagsFilterData,

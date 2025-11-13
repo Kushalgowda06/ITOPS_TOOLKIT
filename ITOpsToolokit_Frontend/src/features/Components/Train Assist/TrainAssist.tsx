@@ -17,6 +17,11 @@ import ScenarioChat from "./ScenarioChat";
 import { wrapIcon } from "../../Utilities/WrapIcons";
 import { useAppSelector } from "../../../app/hooks";
 import { selectCommonConfig } from "../CommonConfig/commonConfigSlice";
+import BarWaveLoader from "../../Utilities/BarWaveLoader";
+import SquareFlipLoader from "../../Utilities/SquareFlipLoader ";
+import FoldingCubeLoader from "../../Utilities/FoldingCubeLoader";
+import SlidingBarsLoader from "../../Utilities/SlidingBarsLoader";
+import AICoreLoader from "../../Utilities/AICoreLoader";
 
 const TrainAssist: React.FC = () => {
 
@@ -68,12 +73,14 @@ const TrainAssist: React.FC = () => {
   const [scenarioResponse, setScenarioResponse] = useState("");
   const [initialConv, setInitialConv] = useState([]);
   const [showArticlesModal, setShowArticlesModal] = useState(false);
-  
+  const [selectedQuizId, setSelectedQuizId] = useState(null);
+  const [quizListData, setQuizListData] = useState([]);
   const navigate = useNavigate();
   const currentUsers: any = useAppSelector(selectCommonConfig);
   const userId = currentUsers.loginDetails.currentUser
   useEffect(() => {
     fetchProblemTasks();
+    quizList();
   }, []);
 
   const fetchProblemTasks = async () => {
@@ -147,6 +154,33 @@ const TrainAssist: React.FC = () => {
     setSelectedArticles([]);
   };
 
+   const quizList = async () => {
+    const payload = {
+       user_id: userId,
+    };
+    setIsLoading(true);
+    try {
+      const response = await axios.post(
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/get_pending_quizes/",
+        payload,
+        {
+          auth: {
+            username: "rest",
+            password: "!fi$5*4KlHDdRwdbup%ix",
+          },
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      setQuizListData(response.data.output.data);
+     
+    } catch (error) {
+      console.error("API Error:", error);
+      
+    }
+  };
+
   const postData = async () => {
     const payload = {
       articles_number: selectedArticles,
@@ -154,7 +188,7 @@ const TrainAssist: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_mcqs/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_mcqs/",
         payload,
         {
           auth: {
@@ -202,7 +236,7 @@ const TrainAssist: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
         payload,
         {
           auth: {
@@ -236,7 +270,7 @@ const TrainAssist: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
         payload,
         {
           auth: {
@@ -264,14 +298,15 @@ const TrainAssist: React.FC = () => {
   const handleResumeSaveQuiz = async () => {
     const payload = {
       user_id: userId,
-      quiz_code: resumeQuizID,
+      // quiz_code: resumeQuizID,
+      quiz_code: selectedQuizId,
       type_of_submit: "resume",
     };
 
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/get_mcqs/",
         payload,
         {
           auth: {
@@ -307,7 +342,7 @@ const TrainAssist: React.FC = () => {
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_scenarios/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_scenarios/",
         payload,
         {
           auth: {
@@ -349,7 +384,7 @@ const TrainAssist: React.FC = () => {
               quizData={quizData}
               userId={userId}
               selectedCategory={selectedQuizCard?.title}
-              quizId={quizId}
+              quizId={quizId || selectedQuizId}
               setIsLoading={setIsLoading}
               setToastMessage={setToastMessage}
               setToastOpen={setToastOpen}
@@ -467,11 +502,11 @@ const TrainAssist: React.FC = () => {
                 </>
               )}
               {showArticlesModal && (
-                <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+                <div className="modal fade  quiz show d-block" tabIndex={-1} role="dialog" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
                   <div className="modal-dialog modal-lg" role="document">
                     <div className="modal-content">
-                      <div className="modal-header" data-bs-theme="dark">
-                        <h5 className="modal-title text-white">{selectedQuizCard?.title}</h5>
+                      <div className="modal-header model_header custom-modal-title  glass-bg " data-bs-theme="dark">
+                        <h5 className="modal-title text-white ">{selectedQuizCard?.title}</h5>
                         <button type="button" className="btn-close btn-close-custom text-white" onClick={() => setShowArticlesModal(false)}></button>
                       </div>
                       <div className="modal-body">
@@ -482,11 +517,11 @@ const TrainAssist: React.FC = () => {
                               : "Choose minimum 1 & maximum 3 articles to begin the quiz"}
                           </span>
                         </div>
-                        <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: "400px" }}>
+                        <div className="d-flex flex-column gap-2 overflow-auto" style={{ maxHeight: "54vh" }}>
                           {kbArticles.map((article) => (
                             <div
                               key={article.id}
-                              className="prb_incident-card prb_card_hover p-3 d-flex align-items-center cursor-pointer flex-row"
+                              className="prb_incident-card prb_card_hover p-3 d-flex align-items-center justify-content-start cursor-pointer flex-row"
                               onClick={() => handleArticleSelect(article.id)}
                             >
                               <input
@@ -560,7 +595,9 @@ const TrainAssist: React.FC = () => {
               {toastMessage}
             </Alert>
           </Snackbar>
-          <Loader isLoading={isLoading} load={null} />
+          {isLoading && <SquareFlipLoader />}
+          {/* <SquareFlipLoader />, <FoldingCubeLoader />, <BarWaveLoader />  <SlidingBarsLoader /> <AICoreLoader />*/}
+          {/* <BarWaveLoader isLoading={isLoading}  /> */}
           <TrainPopupModal
             show={showModal}
             onClose={handleResumeQuiz}
@@ -581,6 +618,8 @@ const TrainAssist: React.FC = () => {
             setReason={setresumeQuizID}
             saveButtonName={"Start"}
             title={"Enter Quiz ID to Resume"}
+            quizListData={quizListData}
+               setSelectedQuizId={setSelectedQuizId}
           />
         </>
       )}

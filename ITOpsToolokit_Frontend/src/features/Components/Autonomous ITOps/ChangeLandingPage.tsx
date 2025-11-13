@@ -60,14 +60,14 @@ const ChangeLandingPage: React.FC = () => {
       title: "Transition AI",
       text: "Intelligent knowledge management, meeting documentation & personalized agent training for streamlined Operations",
       icon: faChartBar, // Replace with your icon path or SVG
-      link: "/Transition_AI",
+      link: "/transition-ai",
       link_paht: "Explore Transition AI",
     },
     {
       title: "Compliance AI",
       text: "Compliance Audit System with AI driven validation and sentiment analysis for Tickets and Service Desk Calls",
       icon: faChartPie, // Replace with your icon path or SVG
-      link: "/Compliance_AI",
+      link: "/compliance-ai",
       link_paht: "Explore Compliance AI",
     },
   ];

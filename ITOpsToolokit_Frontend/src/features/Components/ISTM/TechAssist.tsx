@@ -282,12 +282,12 @@ Generate a set of instructions in a layman language for IT engineer who can exec
       console.log("Generating initial message with request body:", requestBody);
 
       // const response = await Api.postCall(
-      //   "https://predemo_backend.autonomousitopstoolkit.com/llm/api/v1/ask_llm_in_isolation/",
+      //   "https://backend.autonomousitopstoolkit.com/llm/api/v1/ask_llm_in_isolation/",
       //   requestBody
       // );
 
       const response = await await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
+        "https://backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
         requestBody,
         {
           auth: {
@@ -407,10 +407,10 @@ Generate a set of instructions in a layman language for IT engineer who can exec
       console.log("Current context length:", contextToUse.length);
       console.log("Using context:", contextToUse);
 
-      // const response = await Api.postTechAssistData("https://predemo_backend.autonomousitopstoolkit.com/resolution_management/api/v1/act_for_demo_on_ask", payload, null);
+      // const response = await Api.postTechAssistData("https://backend.autonomousitopstoolkit.com/resolution_management/api/v1/act_for_demo_on_ask", payload, null);
 
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/resolution_management/api/v1/act_for_demo_on_ask",
+        "https://backend.autonomousitopstoolkit.com/resolution_management/api/v1/act_for_demo_on_ask",
         payload,
         {
           auth: {
@@ -693,7 +693,7 @@ Generate a set of instructions in a layman language for IT engineer who can exec
               {knowledgeAssistContent?.error && (
                 <button
                   onClick={() => window.location.reload()}
-                  className="btn btn-outline-primary mt-3"
+                  className="btn create_ticket_btn_gradient mt-3"
                 >
                   Refresh Page
                 </button>

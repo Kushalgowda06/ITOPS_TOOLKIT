@@ -14,6 +14,7 @@ import { Dropdown } from "react-bootstrap";
 import { faCaretUp, faCaretDown } from "@fortawesome/free-solid-svg-icons";
 import { useAppDispatch, useAppSelector } from "../../../app/hooks";
 import {
+  hasKClogout,
   resetLoginDetails,
   selectCommonConfig,
 } from "../CommonConfig/commonConfigSlice";
@@ -21,6 +22,8 @@ import DropDown from "../MyRequest/DropDown";
 import TagsFilter from "../TagsFilter/TagsFilter";
 import { VscFilter } from "react-icons/vsc";
 import { wrapIcon } from "../../Utilities/WrapIcons";
+import Breadcrumbs from "../Breadcrumbs/Breadcrumbs";
+import keycloak from "../../Utilities/keyCloak";
 
 const Header: React.FC = (props) => {
   const location = useLocation();
@@ -124,7 +127,9 @@ const Header: React.FC = (props) => {
               {/* <img alt="logo" className="logo-width" style={{width: "167px", height:"27px"}} src="cloud360logo.png" /> */}
               Cognizant
             </Link>
+
           </a>
+           {!pathname.includes("home") && <Breadcrumbs />}
           <button
             className="navbar-toggler"
             type="button"
@@ -145,16 +150,6 @@ const Header: React.FC = (props) => {
             id="n_bar"
           >
             <ul className="navbar-nav d-flex align-item-center header-font   mb-lg-0">
-              <li className="px-2 nav-item ">
-                <a
-                  className="nav-link active pe-auto  text-white"
-                  aria-current="page"
-                  href="/#"
-                >
-                  Home
-                </a>
-              </li>
-
               {pathname.includes("tagging-policy") ||
                 pathname.includes("orphan-objects") ||
                 // pathname.includes("/home") ||
@@ -205,23 +200,23 @@ const Header: React.FC = (props) => {
 
               {/* <li className="px-2 nav-item d-flex align-items-center text-white bell-size ">
                 {/* <FontAwesomeIcon icon={faBell} /> */}
-                {/* <IconButton color="inherit"> */}
-                  {/* <Badge badgeContent={4} color="error"> */}
-                    {/* <NotificationsIcon /> */}
-                  {/* </Badge> */}
-                {/* </IconButton> */}
+              {/* <IconButton color="inherit"> */}
+              {/* <Badge badgeContent={4} color="error"> */}
+              {/* <NotificationsIcon /> */}
+              {/* </Badge> */}
+              {/* </IconButton> */}
               {/* </li> */}
 
-              {pathname.includes("/home") ||
+              {pathname.includes("/") ||
                 pathname.includes("/itops") ||
-                pathname.includes("/ProblemAssist") ||
+                pathname.includes("/problem-ai") ||
                 pathname.includes("/analytics") ||
-                pathname.includes("/knowledge-assist") ||
-                pathname.includes("/TrainAssist") ||
-                pathname.includes("/itsm") ||
-                pathname.includes("/Transition_AI") ||
-                pathname.includes("/Compliance_AI") ||
-                pathname.includes("/change-assist") ||
+                pathname.includes("/knowledge-ai") ||
+                pathname.includes("/train-ai") ||
+                pathname.includes("/incident-ai") ||
+                pathname.includes("/transition-ai") ||
+                pathname.includes("/compliance-ai") ||
+                pathname.includes("/change-ai") ||
                 pathname.includes("/Analytics_AI") ? (
                 <></>
               ) : (
@@ -348,11 +343,13 @@ const Header: React.FC = (props) => {
                         .toUpperCase()}
                     </span>
                   </Dropdown.Toggle>
-                  <Dropdown.Menu  className="glass-card glass-shadow">
-                    <Dropdown.Item>
+                  <Dropdown.Menu className="glass-card me-4 glass-shadow" >
+                    <Dropdown.Item >
                       <div
                         onClick={() => {
                           dispatch(resetLoginDetails());
+                          dispatch(hasKClogout(true))
+                          keycloak.logout()
                         }}
                         className="d-flex glass-card glass-shadow justify-content-center"
                       >

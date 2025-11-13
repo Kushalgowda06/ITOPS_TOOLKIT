@@ -95,6 +95,7 @@ import Compliance_AI from "../Autonomous ITOps/Compliance_AI";
 import Transition_AI from "../Autonomous ITOps/Transition_AI";
 import TrainAssist from "../Train Assist/TrainAssist";
 import { AuthProvider } from "../../../contexts/AuthContext";
+import KeyCloakLogin from "../KeyCloakLogin/KeyCloakLogin";
 
 const Layout: React.FC = () => {
   const location = useLocation();
@@ -109,23 +110,24 @@ const Layout: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
-  useEffect(() => {
-    if (window.location.pathname === "/") {
-      navigate("/home");
-    }
-  }, [navigate]);
+  // useEffect(() => {
+  //   if (window.location.pathname === "/") {
+  //     navigate("/");
+  //   }
+  // }, [navigate]);
 
   return pathname.includes("/NotFound") ? <NotFound /> : storeData.loginDetails?.validation ? (
     <div className="h-100 text-primary Itsm_bg_image font-container">
       <Header />
       <div className="h-100">
+      
         <div className="main-content row m-0">
           {/* <div className="col-1 h-100 gx-0">
             <div className="glass-vertical-nav ">
               <VerticalNavigation />
             </div>
           </div> */}
-          <div className={`col overflow-auto gx-0 glass-content-area  ${(pathname.includes("/change-assist-land") || pathname.includes("/itops") || pathname.includes("/workNext") || pathname.includes("/devOps_IAC")) ? 'landing_scorll' : ''} `}>
+          <div className={`col overflow-auto gx-0 glass-content-area  ${(pathname.includes("/change-ai-land") || pathname.includes("/itops") || pathname.includes("/workNext") || pathname.includes("/devOps_IAC")) ? 'landing_scorll' : ''} `}>
             <ScrollTop />
             <AuthProvider>
               <Routes>
@@ -323,23 +325,25 @@ const Layout: React.FC = () => {
               <Route path="/wsNew" element={<NewWsComponent />} />
               <Route path="/azureMigrate" element={<AzureMigrate />} />
               <Route path="/socket" element={<SocketChat />} />
-              <Route path="/itsm" element={<MainLayout />} />
               <Route path="/Analytics_AI" element={<Dashboard />} />
               <Route path="/Analytics_AI/:cardTitle" element={<Dashboard />} />
               <Route path="/Iac" element={<IACLayout />} />
-              <Route path="/knowledge-assist" element={<KnowledgeAssistLanding />} />
-              <Route path="/change-assist" element={<ChangeAssist />} />
               <Route path="/MigrationDashboard" element={<MigrationDashboard />} />
               <Route path="/AssessmentReport" element={<AssessmentReport />} />
               <Route path="/CloudAssessmentReport" element={<CloudAssessmentReport />} />
               <Route path="/MigrationPlan" element={<MigrationPlan />} />
-              <Route path="/ProblemAssist" element={<ProblemAssist />} />
-              <Route path="/change-assist-land" element={<ChangeLandingPage />} />
-              <Route path="/itops" element={<ITOps />} />
+              <Route path="/change-ai-land" element={<ChangeLandingPage />} />
               <Route path="/analytics" element={<Analytics />} />
-              <Route path="/Compliance_AI" element={<Compliance_AI />} />
-              <Route path="/Transition_AI" element={<Transition_AI />} />
-              <Route path="/TrainAssist" element={< TrainAssist />} />
+              <Route path="/compliance-ai" element={<Compliance_AI />} />
+              <Route path="/transition-ai" element={<Transition_AI />} />
+              <Route path="/transition-ai/knowledge-ai" element={<KnowledgeAssistLanding />} />
+              <Route path="/transition-ai/train-ai" element={< TrainAssist />} />
+
+              <Route path="/itops" element={<ITOps />} />
+              <Route path="/itops/incident-ai" element={<MainLayout />} />
+              <Route path="/itops/change-ai" element={<ChangeAssist />} />
+              <Route path="/itops/problem-ai" element={<ProblemAssist />} />
+
             </Routes>
 
           </div>
@@ -350,8 +354,11 @@ const Layout: React.FC = () => {
     </div>
   ) : (
     <AuthProvider>
-      <LoginPage />
-    </AuthProvider>
+    {/* <Routes>
+      <Route path="/" element={< DemoLogin />} />
+    </Routes> */}
+    <KeyCloakLogin />
+  </AuthProvider>
   );
 };
 export default Layout;

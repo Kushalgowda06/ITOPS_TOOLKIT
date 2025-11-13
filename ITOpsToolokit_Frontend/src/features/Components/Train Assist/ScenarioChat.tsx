@@ -38,7 +38,7 @@ const ScenarioChat = ({
       };
       try {
         const response = await axios.post(
-          "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_scenarios/",
+          "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/generate_scenarios/",
           payload,
           {
             auth: {

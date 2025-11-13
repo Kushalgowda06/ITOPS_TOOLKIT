@@ -108,7 +108,7 @@ const ChangeAssist: React.FC = () => {
 
       // Make API call with authentication
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/change_management/api/v1/draft_change_prompt/",
+        "https://backend.autonomousitopstoolkit.com/change_management/api/v1/draft_change_prompt/",
         payload,
         {
           auth: {

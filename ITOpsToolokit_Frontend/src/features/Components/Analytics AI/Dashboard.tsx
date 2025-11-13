@@ -48,27 +48,27 @@ const mockCards: Card[] = [
     iconType: "settings",
     category: "Log Analytics Agent",
   },
-  {
-    id: 3,
-    title: "Unix Agent",
-    description: "Agent for Unix File Permission machine",
-    iconType: "cloud",
-    category: "Unix Agent",
-  },
-  {
-    id: 4,
-    title: "DB Agent",
-    description: "AI agent for drive space optimization",
-    iconType: "security",
-    category: "DB Agent",
-  },
-  {
-    id: 5,
-    title: "DB Complaince Agent",
-    description: "AI agent for drive configuration management",
-    iconType: "security",
-    category: "DB Complaince Agent",
-  },
+  // {
+  //   id: 3,
+  //   title: "Unix Agent",
+  //   description: "Agent for Unix File Permission machine",
+  //   iconType: "cloud",
+  //   category: "Unix Agent",
+  // },
+  // {
+  //   id: 4,
+  //   title: "DB Agent",
+  //   description: "AI agent for drive space optimization",
+  //   iconType: "security",
+  //   category: "DB Agent",
+  // },
+  // {
+  //   id: 5,
+  //   title: "DB Complaince Agent",
+  //   description: "AI agent for drive configuration management",
+  //   iconType: "security",
+  //   category: "DB Complaince Agent",
+  // },
 
   // {
   //   id: 5,
@@ -172,43 +172,43 @@ const Dashboard: React.FC = () => {
         );
         tempRightSidebarComponent = <LogDataAnalysis />;
         break;
-      case "DB Agent":
-        tempMainContentComponent = (
-          <AiAnalyticsContent
-            url={"http://56.155.15.80:8081/drive_space_opt"}
-            case={"DB Agent"}
-            chaturl={"ws://56.155.15.80:8081/ws/drive_space_opt/"}
-            // chaturl={"http://56.155.15.80:8081/drive_space_opt/RAG"}
-          />
-        );
-        tempRightSidebarComponent = <LogDataAnalysis />;
-        break;
-      case "Unix Agent":
-        tempMainContentComponent = (
-          <AiAnalyticsContent
-            url={"http://3.211.29.69:8000/get_all_file_perm"}
-            case={"Unix Agent"}
-            chaturl={"ws://3.211.29.69:8000/ws/file_permission_chroma_query/"}
-            // chaturl={
-            //   "http://3.211.29.69:8000/file_permission_chroma_query/"
-            // }
-          />
-        );
-        tempRightSidebarComponent = <LogDataAnalysis />;
-        break;
-      case "DB Complaince Agent":
-        tempMainContentComponent = (
-          <AiAnalyticsContent
-            url={"http://3.211.29.69:8000/get_all_db_config"}
-            case={"DB Complaince Agent"}
-            // chaturl={
-            //   "http://3.211.29.69:8000/db_config_chroma_query/"
-            // }
-            chaturl={"ws://3.211.29.69:8000/ws/db_config_chroma_query/"}
-          />
-        );
-        tempRightSidebarComponent = <LogDataAnalysis />;
-        break;
+      // case "DB Agent":
+      //   tempMainContentComponent = (
+      //     <AiAnalyticsContent
+      //       url={"http://56.155.15.80:8081/drive_space_opt"}
+      //       case={"DB Agent"}
+      //       chaturl={"ws://56.155.15.80:8081/ws/drive_space_opt/"}
+      //       // chaturl={"http://56.155.15.80:8081/drive_space_opt/RAG"}
+      //     />
+      //   );
+      //   tempRightSidebarComponent = <LogDataAnalysis />;
+      //   break;
+      // case "Unix Agent":
+      //   tempMainContentComponent = (
+      //     <AiAnalyticsContent
+      //       url={"http://3.211.29.69:8000/get_all_file_perm"}
+      //       case={"Unix Agent"}
+      //       chaturl={"ws://3.211.29.69:8000/ws/file_permission_chroma_query/"}
+      //       // chaturl={
+      //       //   "http://3.211.29.69:8000/file_permission_chroma_query/"
+      //       // }
+      //     />
+      //   );
+      //   tempRightSidebarComponent = <LogDataAnalysis />;
+      //   break;
+      // case "DB Complaince Agent":
+      //   tempMainContentComponent = (
+      //     <AiAnalyticsContent
+      //       url={"http://3.211.29.69:8000/get_all_db_config"}
+      //       case={"DB Complaince Agent"}
+      //       // chaturl={
+      //       //   "http://3.211.29.69:8000/db_config_chroma_query/"
+      //       // }
+      //       chaturl={"ws://3.211.29.69:8000/ws/db_config_chroma_query/"}
+      //     />
+      //   );
+      //   tempRightSidebarComponent = <LogDataAnalysis />;
+      //   break;
 
       // default:
       //   tempMainContentComponent = <AiAnalyticsContent url={"http://3.97.232.96:8006/log_analysis_error_detection_autogen/"} chaturl={"http://20.109.50.251:8006/smart_query/"}/>;

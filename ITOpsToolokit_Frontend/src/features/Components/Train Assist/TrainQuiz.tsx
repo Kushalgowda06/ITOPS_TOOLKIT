@@ -89,7 +89,7 @@ const TrainQuiz = ({
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/submit_quiz/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/submit_quiz/",
         payload,
         {
           auth: {
@@ -126,7 +126,7 @@ const TrainQuiz = ({
     setIsLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/train_assist/api/v1/submit_quiz/",
+        "https://backend.autonomousitopstoolkit.com/train_assist/api/v1/submit_quiz/",
         payload,
         {
           auth: {

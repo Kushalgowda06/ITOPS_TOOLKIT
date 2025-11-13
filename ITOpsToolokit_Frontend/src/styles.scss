@@ -53,9 +53,7 @@ $warning: #eff138;
 $success: #2fb400;
 $orange: #eb7d17;
 
-.MuiInputBase-input.MuiOutlinedInput-input {
-  height: 2px;
-}
+
 
 .text-orange {
   color: var(--text-orange-color, $orange);
@@ -117,6 +115,10 @@ $orange: #eb7d17;
 }
 
 // launch stack form button hover CSS
+.btn {
+    --bs-btn-font-size: 0.7rem !important;
+    --bs-btn-font-weight: 700 !important;
+}
 .btn-outline-success:hover,
 .btn-outline-danger:hover,
 .btn-outline-info:hover {
@@ -591,6 +593,7 @@ $gutters: (
   width: 100% !important;
   padding: 10px;
   border-radius: 0px;
+  background-color: rgba(2, 79, 148, 0.29) !important;
 }
 
 .k8-card-container {
@@ -2946,7 +2949,6 @@ $gutters: (
 .prb_header-left {
   position: relative;
   z-index: 1;
-  width: 30rem;
   height: 26px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
@@ -3010,32 +3012,27 @@ $gutters: (
 
 }
 
+.css-hqsrct-MuiButtonBase-root-MuiIconButton-root{
+  width: 25px !important;
+  height: 25px !important;
+}
+
 .prb_dropdown-menu {
   top: -45% !important;
   left: -37px !important;
   width: 147px !important;
   font-size: 12px !important;
-  // filter: blur(8px);
-
-  /* Glassmorphism background */
-  background-color: rgb(255 255 255 / 0%) !important;
-  backdrop-filter: blur(20px);
+  background-color: rgb(0 66 126 / 75%) !important;
   color: #000 !important;
   /* darker overlay to hide text */
-  backdrop-filter: blur(12px) !important;
-  /* stronger blur */
-  -webkit-backdrop-filter: blur(12px) !important;
-
-  border: 0.5px solid rgba(255, 255, 255, 0.2) !important;
+  backdrop-filter: blur(24px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
   border-radius: 3px !important;
-
   box-shadow:
-    inset 0px 2px 4px rgba(255, 255, 255, 0.1),
-    inset 0px -2px 4px rgba(255, 255, 255, 0.2) !important;
-
+  0px 8px 32px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(255, 255, 255, 0.3) inset, 0px -2px 8px rgba(255, 255, 255, 0.15) inset, 0px 1px 0px rgba(255, 255, 255, 0.4) inset !important;
   position: absolute !important;
   z-index: 1050 !important;
-  // color: #ffffff !important;
+
 }
 
 // .prb_dropdown-menu{
@@ -3074,7 +3071,6 @@ $gutters: (
 }
 
 .prb_card {
-  width: 30rem;
   height: 75px;
   border-radius: 5px;
   border: 1px solid;
@@ -3101,7 +3097,6 @@ $gutters: (
 
 
 .prb_header-right {
-  width: 43rem;
   height: 30px;
   border: 1px solid;
   border-top-left-radius: 10px;
@@ -3128,8 +3123,6 @@ $gutters: (
 
 
 .prb-content-box {
-  width: 43rem;
-  max-height: 77vh;
   // background: rgba(255, 255, 255, 1);
   border: 0.5px solid;
   border-image-source: linear-gradient(244deg,
@@ -3268,7 +3261,7 @@ $gutters: (
 
 .prb_incident-number {
   font-weight: bold;
-  font-size: 12px;
+  font-size: 10px;
   margin-bottom: 4px;
 }
 
@@ -3309,7 +3302,10 @@ $gutters: (
   background: rgba(255, 255, 255, 0.5);
   color: #ffffff;
 }
-
+.prb_incident-card.active {
+   background: rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+}
 .prb_list {
   max-height: 80vh;
   /* Adjust based on header/padding */
@@ -3337,6 +3333,18 @@ $gutters: (
   background-color: rgba(0, 0, 0, 0.2);
   z-index: 1050;
 }
+.quiz_custom_modal {
+  width: 455px;
+  // height: 88vh;
+  background: rgba(255, 255, 255, 0.01);
+  border-radius: 5px;
+  border: 1px solid;
+  border-image-source: linear-gradient(98.82deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.5) 49.87%, rgba(255, 255, 255, 0.025) 99.74%);
+  box-shadow:
+    0px 2px 4px rgba(255, 255, 255, 0.2) inset,
+    0px -2px 4px rgba(255, 255, 255, 0.4) inset;
+  color: white;
+} 
 
 .prb_custom-modal {
   width: 455px;

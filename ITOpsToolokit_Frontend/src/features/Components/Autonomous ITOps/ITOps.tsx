@@ -4,30 +4,30 @@ import { faChartArea, faChartLine,faChartBar,faChartPie } from "@fortawesome/fre
 import Sen from "../../../assets/Send.png";
 import SendI from "../../../assets/Send.png";
 import rocketImg from "../../../assets/rocketImg.png";
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 
 const ITOps: React.FC = () => {
   const cardsData = [
     {
-      title: "Incident Assist",
+      title: "Incident AI",
       text: "Smart issue resolution with contextual guidance, natural language execution, and automatic ticket updates for streamlined operations and root cause clarity.",
       icon: faChartArea, // Replace with your icon path or SVG
-      link: "/itsm",
+      link: "/itops/incident-ai",
     //   link_paht: "Explore ITOps",
     },
    
     {
-      title: "Problem Assist",
+      title: "Problem AI",
       text: "AI-powered system that creates reactive and proactive problem tickets while tagging draft RCA documents for streamlined issue tracking.",
       icon: faChartBar, // Replace with your icon path or SVG
-      link: "/ProblemAssist",
+      link: "/itops/problem-ai",
     //   link_paht: "Explore WorkNext",
     },
      {
-      title: "Change Assist",
+      title: "Change AI",
       text: "AI-driven virtual expert  that drafts change plans, rollback strategies, validation steps, and impact analysis",
       icon: faChartLine, // Replace with your icon path or SVG
-      link: "/change-assist",
+      link: "/itops/change-ai",
     //   link_paht: "Explore Analytics",
     },
     // {
@@ -98,6 +98,7 @@ const ITOps: React.FC = () => {
         ))} */}
       </div>
       {/* </div> */}
+      <Outlet />
     </>
   );
 };

@@ -11,6 +11,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
+  Snackbar,
+  Alert,
   Box,
   Autocomplete,
 } from "@mui/material";
@@ -50,9 +52,10 @@ const ITSMPanel = ({
   const [active, setactive] = useState<number | null>(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredTickets, setFilteredTickets] = useState(tickets);
+  console.log("filteredTickets : ", filteredTickets);
   const [selectedFilter, setSelectedFilter] = useState<
-    "person" | "group" | "personoff"
-  >("person"); // Default to person
+    "AssignTo" | "AssignmentGroup" | "Unassigned"
+  >("AssignTo"); // Default to AssignTo
   const [apiTickets, setApiTickets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [ticketNames, setTicketNames] = useState({});
@@ -60,20 +63,33 @@ const ITSMPanel = ({
   const [expandedTicket, setExpandedTicket] = useState(null); // For accordion
   const [showTicketDetails, setShowTicketDetails] = useState(false); // For accordion visibility
   const cloudData = useAppSelector(selectCommonConfig);
+  const [visibleTicketId, setVisibleTicketId] = useState(null);
+  const [update, setUpdate] = useState(false);  
+
 
   /////////////////////
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitMessage, setSubmitMessage] = useState("");
-  const [messageType, setMessageType] = useState("");
 
   const urgencyOptions = ["1 - High", "2 - Medium", "3 - Low"];
   const impactOptions = ["1 - High", "2 - Medium", "3 - Low"];
 
   const [assignmentGroups, setAssignmentGroups] = useState([]);
   const [assignTo, setAssignTo] = useState([]);
-  const [state, setState] = useState([]);
+  // const [state, setState] = useState([]);
+  const [stateOptions, setStateOptions] = useState([]);
   const [assignedToName, setAssignedToName] = useState("");
   const [assignmentGroupName, setAssignmentGroupName] = useState("");
+  const [selectedTaskType, setSelectedTaskType] = useState("incident");
+  const tasksTypeOption = ["incident", "P_task"];
+
+  const taskTypeApiMap = {
+    incident: "incident",
+    P_task: "problem_task",
+  };
+
+  // When calling the API
+  const apiValue = taskTypeApiMap[selectedTaskType];
 
   // const getFieldValue = (field) => {
   //   if (!field) return "";
@@ -94,35 +110,6 @@ const ITSMPanel = ({
   const current_user_sysID =
     cloudData?.loginDetails?.currentuserDetails?.sys_id;
   console.log("current_user_sysID : ", current_user_sysID);
-  // const getFieldLink = (field) => {
-  //   if (!field) return "";
-  //   if (typeof field === "object" && field.link !== undefined) return field.link;
-  //   return "";
-  // };
-
-  // const mapStateNumberToLabel = (stateValue) => {
-  //   const stateNum = parseInt(getFieldValue(stateValue));
-  //   switch (stateNum) {
-  //     case 1:
-  //       return "New";
-  //     case 2:
-  //       return "In Progress";
-  //     case 3:
-  //       return "On Hold";
-  //     case 4:
-  //       return "Close Incomplete";
-  //     case 6:
-  //       return "Resolved";
-  //     case 7:
-  //       return "Closed";
-  //     case 8:
-  //       return "Canceled";
-  //     case -5:
-  //       return "Pending";
-  //     default:
-  //       return getFieldValue(stateValue) || "Unknown";
-  //   }
-  // };
 
   const fetchNameFromLink = async (link) => {
     try {
@@ -225,7 +212,7 @@ const ITSMPanel = ({
   };
 
   const fetchTicketsByType = async (
-    filterType: "person" | "group" | "personoff"
+    filterType: "AssignTo" | "AssignmentGroup" | "Unassigned"
   ) => {
     setLoading(true);
     const options = {
@@ -238,31 +225,25 @@ const ITSMPanel = ({
     try {
       let queryParams = "";
       switch (filterType) {
-        case "person":
+        case "AssignTo":
           queryParams = `sysparm_query=assigned_to%3D${current_user_sysID}%5EstateNOT%20IN6%2C7%2C3&sysparm_limit=10`;
           break;
-        case "group":
-          // queryParams = 'sysparm_query=assignment_group= ';
-          if (assignmentGroups.length > 0) {
-            console.log("assignmentGroups123: ", assignmentGroups);
-            const groupConditions = assignmentGroups
-              .map((group) => `${group?.sys_id}`)
-              .join("%3D");
-            console.log("groupConditions", groupConditions);
-            queryParams = `sysparm_query=${groupConditions}^state!%3D7&sysparm_fields=sys_id,number,opened_by,state,priority,assigned_to,urgency,assignment_group,impact,short_description,description,comments_and_work_notes,comments&sysparm_limit=50`;
-          } else {
-            queryParams =
-              "sysparm_query=assignment_group!=NULL^assigned_to=NULL^state!%3D7&sysparm_fields=sys_id,number,opened_by,state,priority,assigned_to,urgency,assignment_group,impact,short_description,description,comments_and_work_notes,comments&sysparm_limit=50";
-          }
+        case "AssignmentGroup":
+          const groupConditions = assignmentGroups
+            .map((AssignmentGroup) => `${AssignmentGroup?.sys_id}`)
+            .join("%5E");
+          console.log("groupConditions", groupConditions);
+          queryParams = `sysparm_query=assignment_group%3D${groupConditions}NQstate!%3D6%5E7%5E8&sysparm_limit=20`;
+
           break;
-        case "personoff":
+        case "Unassigned":
           queryParams =
             "sysparm_query=assigned_toISEMPTY%5EstateNOT%20IN6%2C7%2C3&sysparm_limit=15";
           break;
       }
 
       console.log("queryParams123 : ", queryParams);
-      const apiUrl = `https://cisicmpengineering1.service-now.com/api/now/table/incident?${queryParams}`;
+      const apiUrl = `https://cisicmpengineering1.service-now.com/api/now/table/${apiValue}?${queryParams}`;
 
       console.log(`🔍 Fetching ${filterType} tickets from:`, apiUrl);
 
@@ -277,14 +258,14 @@ const ITSMPanel = ({
         setApiTickets(fetchedTickets);
         setFilteredTickets(fetchedTickets);
 
-        // if (filterType === 'person') {
+        // if (filterType === 'AssignTo') {
         //   const groups = fetchedTickets
         //     .map(ticket => getFieldValue(ticket.assignment_group))
-        //     .filter(group => group && group !== "")
-        //     .filter((group, index, self) => self.indexOf(group) === index);
+        //     .filter(AssignmentGroup => AssignmentGroup && AssignmentGroup !== "")
+        //     .filter((AssignmentGroup, index, self) => self.indexOf(AssignmentGroup) === index);
 
         //   setAssignmentGroups(groups);
-        //   console.log(`Collected ${groups.length} assignment groups from person tickets:`, groups);
+        //   console.log(`Collected ${groups.length} assignment groups from AssignTo tickets:`, groups);
         // }
 
         if (fetchedTickets.length > 0) {
@@ -312,17 +293,25 @@ const ITSMPanel = ({
     }
   };
 
-  const handleIconClick = (filterType: "person" | "group" | "personoff") => {
+  const handleIconClick = (
+    filterType: "AssignTo" | "AssignmentGroup" | "Unassigned"
+  ) => {
     console.log(`Icon clicked: ${filterType}`);
     setSelectedFilter(filterType);
     setSearchTerm("");
     setTicketNames({});
     fetchTicketsByType(filterType);
-  };
+  }; 
+  useEffect(() => {
+
+    fetchTicketsByType(selectedFilter);
+  }, [update]);
+
 
   useEffect(() => {
-    fetchTicketsByType("person");
-  }, []);
+    fetchTicketsByType("AssignTo");
+    setSelectedFilter("AssignTo");
+  }, [selectedTaskType]);
 
   useEffect(() => {
     if (!searchTerm.trim()) {
@@ -348,11 +337,20 @@ const ITSMPanel = ({
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   const handleClick = (ticket, index) => {
-    setSelectedTicket(ticket);
-    setExpandedTicket(ticket.sys_id);
-    setShowTicketDetails(true);
-    setIsAccordionOpen(true); // freeze scroll
-
+    if (expandedTicket === ticket.sys_id) {
+      // If clicking the same card, close it
+      setExpandedTicket(null);
+      setShowTicketDetails(false);
+      setIsAccordionOpen(false);
+      setVisibleTicketId(null);
+    } else {
+      // Open the clicked card
+      setSelectedTicket(ticket);
+      setExpandedTicket(ticket.sys_id);
+      setShowTicketDetails(true);
+      setIsAccordionOpen(true); // freeze scroll
+      setVisibleTicketId(ticket.sys_id); // show only this ticket
+    }
     const reordered = [
       ticket,
       ...filteredTickets.filter((t) => t.sys_id !== ticket.sys_id),
@@ -363,6 +361,7 @@ const ITSMPanel = ({
   const handleAccordionClose = () => {
     setExpandedTicket(null);
     setShowTicketDetails(false);
+    setVisibleTicketId(null); // show all tickets again
     setIsAccordionOpen(false); // restore scroll
   };
 
@@ -464,52 +463,7 @@ const ITSMPanel = ({
       fetchAssignmentGroupName(selectedTicket.assignment_group);
     }
   }, [selectedTicket]);
-
-  const mapStateNumberToLabel = (value: number): string => {
-    switch (value) {
-      case 1:
-        return "New";
-      case 2:
-        return "In Progress";
-      case 3:
-        return "On Hold";
-      case 4:
-        return "Close Incomplete";
-      case 6:
-        return "Resolved";
-      case 7:
-        return "Closed";
-      case 8:
-        return "Canceled";
-      case -5:
-        return "Pending";
-      default:
-        return "";
-    }
-  };
-
-  const mapStateLabelToNumber = (label: string): number => {
-    switch (label) {
-      case "New":
-        return 1;
-      case "In Progress":
-        return 2;
-      case "On Hold":
-        return 3;
-      case "Close Incomplete":
-        return 4;
-      case "Resolved":
-        return 6;
-      case "Closed":
-        return 7;
-      case "Canceled":
-        return 8;
-      case "Pending":
-        return -5;
-      default:
-        return 0;
-    }
-  };
+  console.log("selectsdsdfedTicket : ", selectedTicket?.sys_id);
 
   const mapUrgencyNumberToLabel = (num) =>
     urgencyOptions[parseInt(getFieldValue(num)) - 1] || "";
@@ -588,7 +542,7 @@ const ITSMPanel = ({
       };
 
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
+        "https://backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
         requestBody,
         {
           auth: {
@@ -601,7 +555,7 @@ const ITSMPanel = ({
         }
       );
       // const response = await Api.postCall(
-      //   "https://predemo_backend.autonomousitopstoolkit.com/llm/api/v1/ask_llm_in_isolation/",
+      //   "https://backend.autonomousitopstoolkit.com/llm/api/v1/ask_llm_in_isolation/",
       //   requestBody
       // );
 
@@ -624,10 +578,10 @@ const ITSMPanel = ({
     } catch (error) {
       console.error("Error generating conclusive notes:", error);
       // Optionally show an error message to the user
+      setToastOpen(true);
       setSubmitMessage(
         "Failed to generate conclusive notes. Please try again."
       );
-      setMessageType("error");
       setShowSnackbar(true);
       setTimeout(() => setShowSnackbar(false), 5000);
     } finally {
@@ -651,7 +605,7 @@ const ITSMPanel = ({
         const shortDescription =
           watch("short_description") || selectedTicket.short_description;
         const description = watch("description") || selectedTicket.description;
-        const workNotes = watch("comments");
+        const workNotes = watch("comments_and_work_notes");
 
         if (shortDescription && description) {
           // Mark ticket as processed
@@ -668,7 +622,8 @@ const ITSMPanel = ({
     if (selectedTicket) {
       // Map state number to label for display
       const stateValue = getFieldValue(selectedTicket.state);
-      const stateLabelValue = mapStateNumberToLabel(parseInt(stateValue));
+      const stateLabelValue =
+        stateOptions.find((s) => s.value === stateValue)?.label || stateValue;
 
       reset({
         number: getFieldValue(selectedTicket.number),
@@ -715,41 +670,49 @@ const ITSMPanel = ({
       try {
         const [groups, assigns, states] = await Promise.all([
           Api.getCallOptions(
-            `https://cisicmpengineering1.service-now.com/api/now/table/sys_user_group?sysparm_query=user%3D${current_user_sysID}&sysparm_fields=sys_id%2Cname&sysparm_limit=10`,
+            `https://cisicmpengineering1.service-now.com/api/now/table/sys_user_group?sysparm_fields=name,sys_id`,
             options
           ),
           Api.getCallOptions(
-            `https://cisicmpengineering1.service-now.com/api/now/table/sys_user?sysparm_fields=user_name`,
+            `https://cisicmpengineering1.service-now.com/api/now/table/sys_user?sysparm_fields=name`,
             options
           ),
           Api.getCallOptions(
-            `https://cisicmpengineering1.service-now.com/api/now/table/sys_choice?sysparm_query=name=incident^element=incident_state`,
+            `https://cisicmpengineering1.service-now.com/api/now/table/sys_choice?sysparm_query=name=${apiValue}^element=state&sysparm_fields=label,value,sys_id`,
             options
           ),
         ]);
         setAssignmentGroups(groups?.data?.result);
         setAssignTo(assigns?.data?.result);
-        setState(states?.data?.result);
+        setStateOptions(states?.data?.result);
       } catch (error) {
         console.error("Error fetching data:", error);
       }
     };
     fetchData();
-  }, []);
-
+  }, [selectedTaskType]);
   const onSubmit = async (data) => {
+    console.log("Selected ticket sys_id:", selectedTicket?.sys_id);
+       setUpdate(false)
     if (!isDirty) {
+      setToastOpen(true);
       setSubmitMessage("No changes detected.");
-      setMessageType("info");
       return;
     }
 
+    // Axios auth + headers
     const options = {
       auth: {
         username: "ServicenowAPI",
         password: "Qwerty@123",
       },
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
     };
+
+    // Build payload for PATCH
     const dataToSend = {};
     Object.keys(dirtyFields).forEach((field) => {
       if (dirtyFields[field]) {
@@ -761,155 +724,211 @@ const ITSMPanel = ({
           case "impact":
             value = mapImpactLabelToNumber(data.impact);
             break;
+          // case "state":
+          //   value =
+          //     stateOptions.find((s) => s.label === data.state)?.value ||
+          //     data.state;
+          //   break;
           case "state":
-            value = mapStateLabelToNumber(data.state);
+            // Handle both object and string forms
+            if (typeof data.state === "object" && data.state !== null) {
+              value = data.state.value; // ✅ extract only the value (e.g. "6")
+            } else {
+              value =
+                stateOptions.find((s) => s.label === data.state)?.value ||
+                data.state;
+            }
             break;
+
           case "assignTo":
-            // For assignTo, if we're updating and the value is a name,
-            // we need to send the original value from selectedTicket
+            // ✅ Ensure we send sys_id of assigned_to user
             if (data.assignTo === assignedToName) {
               value = getFieldValue(selectedTicket?.assigned_to);
             } else {
-              value = data[field];
+              value = data[field]; // should already be sys_id if selected from dropdown
             }
-            break;
+            dataToSend["assigned_to"] = value; // ✅ ServiceNow expects field name `assigned_to`
+            return;
+
           case "assignmentGroup":
-            // For assignmentGroup, if we're updating and the value is a name,
-            // we need to send the original value from selectedTicket
+            // ✅ Ensure we send sys_id of assignment_group
             if (data.assignmentGroup === assignmentGroupName) {
               value = getFieldValue(selectedTicket?.assignment_group);
             } else {
               value = data[field];
             }
-            break;
+            dataToSend["assignment_group"] = value; // ✅ Correct ServiceNow field name
+            return;
+
           default:
             value = data[field];
         }
 
-        dataToSend[field] = value;
+        // ✅ Don't include undefined/null values
+        if (value !== undefined && value !== null) {
+          dataToSend[field] = value;
+        }
       }
     });
 
+    // 🧠 If assignTo or assignmentGroup were remapped above, avoid duplicate keys
+    // delete dataToSend.assignTo;
+    // delete dataToSend.assignmentGroup;fv
+    // delete dataToSend.stateOptions;
+    // If resolving or closing, include mandatory fields
+
+if ((dataToSend as any)?.state === "6" || (dataToSend as any)?.state === "7") {
+  (dataToSend as any).close_code = "Solved (Permanently)";
+  (dataToSend as any).close_notes = "Ticket resolved successfully.";
+}
+
+    console.log("Payload to send:", dataToSend);
+
     try {
       setIsSubmitting(true);
+
       const res = await axios.patch(
         `https://cisicmpengineering1.service-now.com/api/now/table/incident/${selectedTicket?.sys_id}`,
         dataToSend,
         options
       );
-      if (res.status === 200) {
+
+      if (res.status === 200 || res.status === 204) {
+        setUpdate(true)
+        setToastOpen(true);
         setSubmitMessage("Ticket updated successfully!");
-        setMessageType("success");
+        handleAccordionClose();
+
+        // const updatedStateLabel =
+        //   stateOptions.find((s) => s.value === (dataToSend as any)?.state)
+        //     ?.label || data.state;
+        // console.log("updatedStateLabel : ", updatedStateLabel);
         reset({
           ...data,
           urgency: mapUrgencyNumberToLabel(
             mapUrgencyLabelToNumber(data.urgency)
           ),
           impact: mapImpactNumberToLabel(mapImpactLabelToNumber(data.impact)),
-          state: mapStateNumberToLabel(mapStateLabelToNumber(data.state)),
+          // state: data.state,
         });
       } else {
         throw new Error("Update failed");
       }
     } catch (err) {
-      console.error("Update error:", err);
+      console.error("Update error:", err.response?.data || err);
+      setToastOpen(true);
       setSubmitMessage("Failed to update ticket.");
-      setMessageType("error");
     } finally {
       setIsSubmitting(false);
       setTimeout(() => {
-        setSubmitMessage("");
-        setMessageType("");
+        // optional: clear message
       }, 4000);
     }
   };
 
   const handleFilterChange = (filterType) => {
+    handleAccordionClose();
     setSelectedTaskType(filterType);
-    setactive(0); // Reset active selection when filter changes
+    setactive(0); // Reset active selection
     if (onFilterChange) {
-      onFilterChange(filterType);
+      const apiValue = taskTypeApiMap[filterType]; // mapped value
+      onFilterChange(apiValue);
     }
   };
 
-  const [selectedTaskType, setSelectedTaskType] = useState("incident");
+  // const handleFilterChange = (filterType) => {
+  //   setSelectedTaskType(filterType);
+  //   setactive(0); // Reset active selection when filter changes
+  //   if (onFilterChange) {
+  //     onFilterChange(filterType);
+  //   }
+  // };
 
-  const tasksTypeOption = ["incident", "P_task"];
   const formatLabel = (str) =>
     str.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+
+  const [toastOpen, setToastOpen] = useState<boolean>(false);
+
+  const handleToastClose = () => {
+    setToastOpen(false);
+  };
+
   return (
-    <div className=" rounded-top shadow-lg text-dark custom-rounded me-1">
-      <div className="d-flex align-items-center justify-content-between px-3 py-2 rounded-top istm_header_height box-shadow text-white">
-        <div className="m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold ">
-          {/* ===== Task type menu (MUI Menu - portal rendered to body) ===== */}
-          <div>
-            <Button
-              id="task-type-button"
-              aria-controls={menuOpen ? "task-type-menu" : undefined}
-              aria-haspopup="true"
-              aria-expanded={menuOpen ? "true" : undefined}
-              onClick={(e) => setMenuAnchorEl(e.currentTarget)}
-              className="itsm_header-dropdown "
-              // keep styling consistent with your existing class; change variant if needed
-              variant="text"
-              size="small"
-              endIcon={<ArrowDropDownIcon />}
-            >
-              <span className="inc_btn_text">
-                {formatLabel(
-                  selectedTaskType === "incident" ? "INC" : "P-Task"
-                )}
-                {/* {selectedTaskType === "incident" ? "INC" : "P-Task"} */}
-              </span>
-            </Button>
+    <>
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={handleToastClose}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleToastClose}
+          className="glass-notice-card"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {submitMessage}
+        </Alert>
+      </Snackbar>
+      <div className=" rounded-top shadow-lg text-dark custom-rounded me-1">
+        <div className="d-flex align-items-center justify-content-between px-2 py-2 rounded-top istm_header_height box-shadow text-white">
+          <div className="m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold ">
+            {/* ===== Task type menu (MUI Menu - portal rendered to body) ===== */}
+            <div>
+              <Button
+                id="task-type-button"
+                aria-controls={menuOpen ? "task-type-menu" : undefined}
+                aria-haspopup="true"
+                aria-expanded={menuOpen ? "true" : undefined}
+                onClick={(e) => setMenuAnchorEl(e.currentTarget)}
+                className="itsm_header-dropdown "
+                // keep styling consistent with your existing class; change variant if needed
+                variant="text"
+                size="small"
+                endIcon={<ArrowDropDownIcon />}
+                sx={{
+                  minWidth: "74px",
+                }}
+              >
+                <span className="inc_btn_text">
+                  {formatLabel(
+                    selectedTaskType === "incident" ? "INC" : "P-Task"
+                  )}
+                  {/* {selectedTaskType === "incident" ? "INC" : "P-Task"} */}
+                </span>
+              </Button>
 
-            <Menu
-              id="task-type-menu"
-              anchorEl={menuAnchorEl}
-              open={menuOpen}
-              className="itsm_dropdown-menu glass-shadow"
-              onClose={() => setMenuAnchorEl(null)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-              transformOrigin={{ vertical: "top", horizontal: "left" }}
-              // MUI Menu uses a portal by default, so it will not be clipped by parent overflow
-              PaperProps={{
-                sx: {
-                  backdropFilter: "blur(24px)", // frosted glass blur
-                  backgroundColor: "rgb(2 79 148 / 29%)", // semi-transparent dark
-                  // borderRadius: "1px",
-                  border: "1px solid rgba(255, 255, 255, 0.15)",
-                  // boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
-                  color: "white",
-                  zIndex: 3000,
-                  marginLeft: "10px",
-                  boxShadow:
-                    "0px 8px 32px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(255, 255, 255, 0.3) inset, 0px -2px 8px rgba(255, 255, 255, 0.15) inset, 0px 1px 0px rgba(255, 255, 255, 0.4) inset",
-                },
-              }}
-            >
-              {tasksTypeOption.map((option, index) => (
-                <MenuItem
-                  key={index}
-                  onClick={() => {
-                    handleFilterChange(option);
-                    setMenuAnchorEl(null);
-                  }}
-                  className="inc_btn_text"
-                  sx={{
-                    fontSize: "10px",
-                    // backgroundColor: "rgba(255, 255, 255, 0.15)",
-                    // "&:hover": {
-                    //   backgroundColor: "rgba(255, 255, 255, 0.15)",
-                    // },
-                  }}
-                >
-                  {formatLabel(option)}
-                </MenuItem>
-              ))}
-            </Menu>
-          </div>
+              <Menu
+                id="task-type-menu"
+                anchorEl={menuAnchorEl}
+                open={menuOpen}
+                onClose={() => setMenuAnchorEl(null)}
+                anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+                transformOrigin={{ vertical: "top", horizontal: "left" }}
+              >
+                {tasksTypeOption.map((option, index) => (
+                  <MenuItem
+                    key={index}
+                    onClick={() => {
+                      handleFilterChange(option);
+                      setMenuAnchorEl(null);
+                    }}
+                    className="inc_btn_text"
+                    sx={{
+                      fontSize: "10px",
+                      // backgroundColor: "rgba(255, 255, 255, 0.15)",
+                      // "&:hover": {
+                      //   backgroundColor: "rgba(255, 255, 255, 0.15)",
+                      // },
+                    }}
+                  >
+                    {formatLabel(option)}
+                  </MenuItem>
+                ))}
+              </Menu>
+            </div>
 
-          {/* <div className="dropdown">
+            {/* <div className="dropdown">
             <button
               role="button"
               className="dropdown-toggle glass-header-partial-border px-1 rounded text-white border-none "
@@ -933,7 +952,7 @@ const ITSMPanel = ({
             </ul>
           </div> */}
 
-          {/* <Dropdown  >
+            {/* <Dropdown  >
             <Dropdown.Toggle className="itsm_header-dropdown" id="dropdown-basic">
               <span className="text-md">{selectedTaskType == "incident" ? "INC" : "P-Task"}</span>
             </Dropdown.Toggle>
@@ -951,7 +970,7 @@ const ITSMPanel = ({
             </Dropdown.Menu>
           </Dropdown> */}
 
-          {/* <div class="dropdown">
+            {/* <div class="dropdown">
             <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
               Dropdown button
             </button>
@@ -961,83 +980,89 @@ const ITSMPanel = ({
               <li><a class="dropdown-item" href="#">Something else here</a></li>
             </ul>
           </div> */}
+          </div>
+          <div className="mt-1 seach_layout">
+            <TextField
+              fullWidth
+              size="small"
+              className="bg-white rounded"
+              variant="outlined"
+              placeholder="Search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Search className="search_icon" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </div>
+          <Tooltip title="AssignTo " arrow>
+            <IconButton
+              onClick={() => (
+                handleIconClick("AssignTo"), handleAccordionClose()
+              )}
+              sx={{
+                color: "white",
+                backgroundColor:
+                  selectedFilter === "AssignTo"
+                    ? "rgba(255, 255, 255, 0.2)"
+                    : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                },
+              }}
+            >
+              <Person />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="AssignmentGroup" arrow>
+            <IconButton
+              onClick={() => (
+                handleIconClick("AssignmentGroup"), handleAccordionClose()
+              )}
+              sx={{
+                color: "white",
+                backgroundColor:
+                  selectedFilter === "AssignmentGroup"
+                    ? "rgba(255, 255, 255, 0.2)"
+                    : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                },
+              }}
+            >
+              <Group />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Unassigned" arrow>
+            <IconButton
+              onClick={() => (
+                handleIconClick("Unassigned"), handleAccordionClose()
+              )}
+              sx={{
+                color: "white",
+                backgroundColor:
+                  selectedFilter === "Unassigned"
+                    ? "rgba(255, 255, 255, 0.2)"
+                    : "transparent",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  color: "white",
+                },
+              }}
+            >
+              <PersonOff />
+            </IconButton>
+          </Tooltip>
         </div>
-        <div className="mt-1 seach_layout">
-          <TextField
-            fullWidth
-            size="small"
-            className="bg-white rounded"
-            variant="outlined"
-            placeholder="Search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <Search className="search_icon" />
-                </InputAdornment>
-              ),
-            }}
-          />
-        </div>
-        <Tooltip title="Personal Tickets" arrow>
-          <IconButton
-            onClick={() => handleIconClick("person")}
-            sx={{
-              color: "white",
-              backgroundColor:
-                selectedFilter === "person"
-                  ? "rgba(255, 255, 255, 0.2)"
-                  : "transparent",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                color: "white",
-              },
-            }}
-          >
-            <Person />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Group Tickets" arrow>
-          <IconButton
-            onClick={() => handleIconClick("group")}
-            sx={{
-              color: "white",
-              backgroundColor:
-                selectedFilter === "group"
-                  ? "rgba(255, 255, 255, 0.2)"
-                  : "transparent",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                color: "white",
-              },
-            }}
-          >
-            <Group />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Unassigned Tickets" arrow>
-          <IconButton
-            onClick={() => handleIconClick("personoff")}
-            sx={{
-              color: "white",
-              backgroundColor:
-                selectedFilter === "personoff"
-                  ? "rgba(255, 255, 255, 0.2)"
-                  : "transparent",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.1)",
-                color: "white",
-              },
-            }}
-          >
-            <PersonOff />
-          </IconButton>
-        </Tooltip>
-      </div>
-      {/* Ticket List */}
-      <div>
-        {/* <div className="px-3 py-2 glass-header-partial-border border-bottom border-white border-opacity-10">
+        {/* Ticket List */}
+        <div>
+          {/* <div className="px-3 py-2 glass-header-partial-border border-bottom border-white border-opacity-10">
           <div className="d-flex justify-content-center gap-1">
             <button
               onClick={() => handleFilterChange("incident")}
@@ -1060,618 +1085,700 @@ const ITSMPanel = ({
           </div>
         </div> */}
 
-        <div
-          className={`flex-grow-1 mt-1 itsm_pannel ${
-            isAccordionOpen ? "no-scroll" : "overflow-scroll"
-          }`}
-        >
-          {loading ? (
-            <div className="text-center p-4">
-              <div className="spinner-border text-primary" role="status">
-                <span className="visually-hidden">Loading...</span>
+          <div
+            className={`flex-grow-1 mt-1 itsm_pannel ${
+              isAccordionOpen ? "no-scroll" : "overflow-scroll"
+            }`}
+          >
+            {loading ? (
+              <div className="text-center p-4">
+                <div className="spinner-border text-white" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2 text-muted">
+                  Loading {selectedFilter} tickets...
+                </p>
               </div>
-              <p className="mt-2 text-muted">
-                Loading {selectedFilter} tickets...
-              </p>
-            </div>
-          ) : filteredTickets.length > 0 ? (
-            filteredTickets.map((ticket, index) => {
-              // Debug logging to check state value
-              console.log("Ticket state raw:", ticket.state);
-              console.log(
-                "Ticket state getFieldValue:",
-                getFieldValue(ticket.state)
-              );
-              console.log(
-                "Ticket state parseInt:",
-                parseInt(getFieldValue(ticket.state))
-              );
+            ) : filteredTickets.length > 0 ? (
+              filteredTickets
+                .filter(
+                  (ticket) =>
+                    !visibleTicketId || ticket.sys_id === visibleTicketId
+                )
+                .map((ticket, index) => {
+                  // Debug logging to check state value
+                  console.log("Ticket state raw:", ticket.state);
+                  console.log(
+                    "Ticket state getFieldValue:",
+                    getFieldValue(ticket.state)
+                  );
+                  console.log(
+                    "Ticket state parseInt:",
+                    parseInt(getFieldValue(ticket.state))
+                  );
 
-              return (
-                <div key={ticket.sys_id || index}>
-                  <Card
-                    className={`ticket-card itsm-glass-card itsm-fixed-height-card text-white mb-1 p-2 ${
-                      active === index ? "selected" : ""
-                    }`}
-                    onClick={() => handleClick(ticket, index)}
-                  >
-                    <div className="d-flex justify-content-between card_p align-items-center">
-                      <span>
-                        <strong className="card_title">
-                          {getFieldValue(ticket.number)}
-                        </strong>
-                      </span>
-                      <div className="d-flex gap-2">
-                        <span
-                          className={`status-badge status-${mapStateNumberToLabel(
-                            parseInt(getFieldValue(ticket.state)) || 1
-                          )
-                            .toLowerCase()
-                            .replace(/\s+/g, "-")}`}
-                        >
-                          {mapStateNumberToLabel(
-                            parseInt(getFieldValue(ticket.state))
-                          )}
-                        </span>
-                        <span className="priority-badge">
-                          Priority - {getFieldValue(ticket.priority) || "3"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <p className="mb-1 ">
-                      <span>
-                        <strong className="card_title">
-                          Short Description :
-                        </strong>
-                      </span>
-                      <Tooltip
-                        title={capitalizeFirstLetter(
-                          getFieldValue(ticket.short_description) || ""
-                        )}
-                        placement="top"
-                        arrow
-                        followCursor
-                        PopperProps={{
-                          className: "high-z-index",
-                        }}
+                  return (
+                    <div key={ticket.sys_id || index}>
+                      <Card
+                        className={`ticket-card itsm-glass-card itsm-fixed-height-card text-white mb-1 p-2 ${
+                          active === index ? "selected" : ""
+                        }`}
+                        onClick={() => handleClick(ticket, index)}
                       >
-                        <span className="cursor-pointer card_p ps-1">
-                          {getFieldValue(ticket.short_description)?.substring(
-                            0,
-                            60
-                          ) || ""}
-                          {(getFieldValue(ticket.short_description)?.length ||
-                            0) > 40
-                            ? "..."
-                            : ""}
-                        </span>
-                      </Tooltip>
-                    </p>
-                    <div className="d-flex justify-content-between card_p align-items-center">
-                      <span>
-                        <strong className="card_title"></strong>{" "}
-                        {getDisplayName(ticket, "assigned_to") || "Unassigned"}
-                      </span>
-                      <span>
-                        <strong className="card_title">
-                          Assignment Group:
-                        </strong>{" "}
-                        {getDisplayName(ticket, "assignment_group") || "None"}
-                      </span>
-                    </div>
-                    {/* <div className="d-flex justify-content-between  card_p align-items-center">
-                  <span>
-                      <strong className="card_title">
-                         {selectedFilter === 'group' ? 'Assignment Group' : 'Assigned to'} 
-                      </strong> {selectedFilter === 'group' ? getDisplayName(ticket, 'assignment_group') : getDisplayName(ticket, 'assigned_to')}
-                    </span>
-                    <span>
-                      <strong className="card_title">
-                        {selectedFilter === 'group' ? 'Assignment Group' : 'Assigned to'}
-                      </strong> - {selectedFilter === 'group' ? getDisplayName(ticket, 'assignment_group') : getDisplayName(ticket, 'assigned_to')}
-                    </span>
-                  </div> */}
-                  </Card>
+                        <div className="d-flex justify-content-between card_p align-items-center">
+                          <span>
+                            <strong className="card_title">
+                              {getFieldValue(ticket.number)}
+                            </strong>
+                          </span>
+                          <div className="d-flex gap-2">
+                            <span
+                              className={`status-badge status-${stateOptions
+                                .find(
+                                  (s) =>
+                                    s.value ===
+                                    String(getFieldValue(ticket.state))
+                                )
+                                ?.label?.toLowerCase()
+                                .replace(/\s+/g, "-")}`}
+                            >
+                              {
+                                stateOptions.find(
+                                  (s) =>
+                                    s.value ===
+                                    String(getFieldValue(ticket.state))
+                                )?.label
+                              }
+                            </span>
 
-                  {/* Show accordion directly below the clicked card */}
-                  {showTicketDetails && expandedTicket === ticket.sys_id && (
-                    <div className="mb-2">
-                      <Accordion
-                        expanded={true}
-                        className="shadow-sm "
-                        style={{ backgroundColor: "rgba(255, 255, 255, 0.08)" }}
-                      >
-                        <AccordionDetails className="p-0 position-relative itsm-glass-card text-white">
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAccordionClose();
-                            }}
-                            sx={{
-                              position: "absolute",
-                              top: "8px",
-                              right: "8px",
-                              zIndex: 1010,
-                              background: "rgba(255, 255, 255, 0.1)",
-                              backdropFilter: "blur(15px)",
-                              WebkitBackdropFilter: "blur(15px)",
-                              border: "1px solid rgba(255, 255, 255, 0.3)",
-                              borderRadius: "50%",
-                              boxShadow:
-                                "0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(255, 255, 255, 0.2) inset",
-                              color: "rgba(255, 255, 255, 0.9)",
-                              width: "32px",
-                              height: "32px",
-                              "&:hover": {
-                                background: "rgba(255, 255, 255, 0.2)",
-                                borderColor: "rgba(255, 255, 255, 0.5)",
-                                boxShadow:
-                                  "0 6px 20px rgba(0, 0, 0, 0.2), 0 3px 12px rgba(255, 255, 255, 0.3) inset",
-                                transform: "scale(1.05)",
-                              },
+                            <span className="priority-badge">
+                              Priority - {getFieldValue(ticket.priority)}
+                            </span>
+                          </div>
+                        </div>
+
+                        <p className="mb-1 ">
+                          <span>
+                            <strong className="card_title">
+                              Short Description :
+                            </strong>
+                          </span>
+                          <Tooltip
+                            title={capitalizeFirstLetter(
+                              getFieldValue(ticket.short_description) || ""
+                            )}
+                            placement="top"
+                            arrow
+                            followCursor
+                            PopperProps={{
+                              className: "high-z-index",
                             }}
                           >
-                            <Close
-                              fontSize="small"
+                            <span className="cursor-pointer card_p ps-1">
+                              {getFieldValue(
+                                ticket.short_description
+                              )?.substring(0, 60) || ""}
+                              {(getFieldValue(ticket.short_description)
+                                ?.length || 0) > 40
+                                ? "..."
+                                : ""}
+                            </span>
+                          </Tooltip>
+                        </p>
+                        <div className="d-flex justify-content-between card_p align-items-center">
+                          <span>
+                            <strong className="card_title"></strong>{" "}
+                            {getDisplayName(ticket, "assigned_to")}
+                          </span>
+                          <span>
+                            <strong className="card_title">
+                              Assignment Group:
+                            </strong>{" "}
+                            {getDisplayName(ticket, "assignment_group")}
+                          </span>
+                        </div>
+                      </Card>
+
+                      {/* Show accordion directly below the clicked card */}
+                      {showTicketDetails &&
+                        expandedTicket === ticket.sys_id && (
+                          <div className="mb-2">
+                            <Accordion
+                              expanded={true}
+                              className="shadow-sm "
                               style={{
-                                fontSize: "16px",
-                                color: "rgba(255, 255, 255, 0.9)",
+                                backgroundColor: "rgba(255, 255, 255, 0.08)",
                               }}
-                            />
-                          </IconButton>
-                          <div className="fs-7 me-2 itsm_form ccontainer text-white  rounded-top custom-container  shadow-lg text-primary custom-rounded">
-                            <div className="ISTMAssit  lh-base">
-                              <p>
-                                {getFieldValue(
-                                  selectedTicket?.short_description
-                                )}{" "}
-                              </p>
-                              <form
-                                onSubmit={handleSubmit(onSubmit)}
-                                className="text-white"
-                              >
-                                <div className="row g-4 mb-4">
-                                  <div className="col-12 col-md-6">
+                              // sx={{
+                              //   maxHeight: {
+                              //     xs: "60vh", // mobile
+                              //     sm: "65vh", // small screens
+                              //     md: "70vh", // tablets
+                              //     lg: "75vh", // desktop
+                              //   },
+                              //   overflowY: "auto",
+                              // }}
+                            >
+                              <AccordionDetails className=" scrollable-accordion p-0 position-relative itsm-glass-card text-white">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAccordionClose();
+                                  }}
+                                  sx={{
+                                    position: "absolute",
+                                    top: "8px",
+                                    right: "8px",
+                                    zIndex: 1010,
+                                    background: "rgba(255, 255, 255, 0.1)",
+                                    backdropFilter: "blur(15px)",
+                                    WebkitBackdropFilter: "blur(15px)",
+                                    border:
+                                      "1px solid rgba(255, 255, 255, 0.3)",
+                                    borderRadius: "50%",
+                                    boxShadow:
+                                      "0 4px 16px rgba(0, 0, 0, 0.15), 0 2px 8px rgba(255, 255, 255, 0.2) inset",
+                                    color: "rgba(255, 255, 255, 0.9)",
+                                    width: "32px",
+                                    height: "32px",
+                                    "&:hover": {
+                                      background: "rgba(255, 255, 255, 0.2)",
+                                      borderColor: "rgba(255, 255, 255, 0.5)",
+                                      boxShadow:
+                                        "0 6px 20px rgba(0, 0, 0, 0.2), 0 3px 12px rgba(255, 255, 255, 0.3) inset",
+                                      transform: "scale(1.05)",
+                                    },
+                                  }}
+                                >
+                                  <Close
+                                    fontSize="small"
+                                    style={{
+                                      fontSize: "16px",
+                                      color: "rgba(255, 255, 255, 0.9)",
+                                    }}
+                                  />
+                                </IconButton>
+                                <div className="fs-7 me-2 itsm_form ccontainer text-white  rounded-top custom-container  shadow-lg text-primary custom-rounded">
+                                  <div className="ISTMAssit  lh-base">
                                     <p>
-                                      <span className="fw-semibold">
-                                        Number:
-                                      </span>{" "}
-                                      <span className="fw-normal">
-                                        {getFieldValue(selectedTicket?.number)}
-                                      </span>
+                                      {getFieldValue(
+                                        selectedTicket?.short_description
+                                      )}{" "}
                                     </p>
-                                  </div>
-                                  <div className="col-12 col-md-6">
-                                    <p>
-                                      <span className="fw-semibold">
-                                        Opened by:
-                                      </span>{" "}
-                                      <Tooltip
-                                        title={
-                                          getFieldValue(
-                                            selectedTicket?.opened_by
-                                          ) || "Unknown"
-                                        }
-                                        placement="top"
-                                        arrow
-                                        PopperProps={{
-                                          className: "high-z-index",
-                                        }}
-                                      >
-                                        <span className="fw-normal cursor-pointer">
-                                          {(
-                                            getFieldValue(
-                                              selectedTicket?.opened_by
-                                            ) || "Unknown"
-                                          ).substring(0, 15)}
-                                          {(
-                                            getFieldValue(
-                                              selectedTicket?.opened_by
-                                            ) || ""
-                                          ).length > 15
-                                            ? "..."
-                                            : ""}
-                                        </span>
-                                      </Tooltip>
-                                    </p>
-                                  </div>
-                                  <div
-                                    className="row g-3"
-                                    style={{ marginTop: "-12px" }}
-                                  >
-                                    <div className="col-12 col-md-6">
-                                      <Controller
-                                        name="state"
-                                        control={control}
-                                        render={({ field }) => (
-                                          <Autocomplete
-                                            options={state}
-                                            value={field.value || ""}
-                                            onChange={(event, newValue) => {
-                                              field.onChange(newValue);
-                                            }}
-                                            renderInput={(params) => (
-                                              <TextField
-                                                {...params}
-                                                label="State"
-                                                className="tv-autocomplete"
-                                                variant="outlined"
-                                                fullWidth
-                                              />
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
-
-                                    <div className="col-12 col-md-6">
-                                      <TextField
-                                        id="priority"
-                                        label="Priority"
-                                        variant="outlined"
-                                        disabled
-                                        fullWidth
-                                        {...register("priority", {
-                                          required: "priority is required",
-                                        })}
-                                        error={!!errors.priority}
-                                      />
-                                    </div>
-
-                                    <div className="col-12 col-md-6">
-                                      <Controller
-                                        name="assignTo"
-                                        control={control}
-                                        rules={{
-                                          required: "Assigned To is required",
-                                        }}
-                                        render={({ field }) => (
-                                          <Autocomplete
-                                            {...field}
-                                            value={
-                                              assignTo.find(
-                                                (item) =>
-                                                  (item.user_name ||
-                                                    item.name ||
-                                                    item.display_value ||
-                                                    item.value) === field.value
-                                              ) || null
-                                            }
-                                            options={assignTo}
-                                            getOptionLabel={(option) =>
-                                              option.user_name ||
-                                              option.name ||
-                                              option.display_value ||
-                                              option.value ||
-                                              ""
-                                            }
-                                            isOptionEqualToValue={(
-                                              option,
-                                              value
-                                            ) => {
-                                              if (
-                                                typeof value === "object" &&
-                                                value !== null
-                                              ) {
-                                                const optionValue =
-                                                  option.user_name ||
-                                                  option.name ||
-                                                  option.display_value ||
-                                                  option.value;
-                                                const valueValue =
-                                                  value.user_name ||
-                                                  value.name ||
-                                                  value.display_value ||
-                                                  value.value;
-                                                return (
-                                                  optionValue === valueValue
-                                                );
+                                    <form
+                                      onSubmit={handleSubmit(onSubmit)}
+                                      className="text-white"
+                                    >
+                                      <div className="row g-4 mb-4">
+                                        <div className="col-12 col-md-6">
+                                          <p>
+                                            <span className="fw-semibold">
+                                              Number:
+                                            </span>{" "}
+                                            <span className="fw-normal">
+                                              {getFieldValue(
+                                                selectedTicket?.number
+                                              )}
+                                            </span>
+                                          </p>{" "}
+                                        </div>
+                                        <div className="col-12 col-md-6">
+                                          <p>
+                                            <span className="fw-semibold">
+                                              Opened by:
+                                            </span>{" "}
+                                            <Tooltip
+                                              title={
+                                                getFieldValue(
+                                                  selectedTicket?.opened_by
+                                                ) || "Unknown"
                                               }
-                                              const optionValue =
-                                                option.user_name ||
-                                                option.name ||
-                                                option.display_value ||
-                                                option.value;
-                                              return optionValue === value;
-                                            }}
-                                            onChange={(_, value) =>
-                                              field.onChange(
-                                                value
-                                                  ? value.user_name ||
-                                                      value.name ||
-                                                      value.display_value ||
-                                                      value.value
-                                                  : ""
-                                              )
-                                            }
-                                            renderInput={(params) => (
-                                              <TextField
-                                                {...params}
-                                                label="Assigned to"
-                                                variant="outlined"
-                                                className="tv-autocomplete"
-                                                error={!!errors.assignTo}
-                                                helperText={
-                                                  errors.assignTo
-                                                    ?.message as string
-                                                }
-                                                fullWidth
-                                              />
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
+                                              placement="top"
+                                              arrow
+                                              PopperProps={{
+                                                className: "high-z-index",
+                                              }}
+                                            >
+                                              <span className="fw-normal cursor-pointer">
+                                                {(
+                                                  getFieldValue(
+                                                    selectedTicket?.opened_by
+                                                  ) || "Unknown"
+                                                ).substring(0, 15)}
+                                                {(
+                                                  getFieldValue(
+                                                    selectedTicket?.opened_by
+                                                  ) || ""
+                                                ).length > 15
+                                                  ? "..."
+                                                  : ""}
+                                              </span>
+                                            </Tooltip>
+                                          </p>
+                                        </div>
+                                        <div
+                                          className="row g-3"
+                                          style={{ marginTop: "-12px" }}
+                                        >
+                                          <div className="col-12 col-md-6">
+                                            <Controller
+                                              name="state"
+                                              control={control}
+                                              render={({ field }) => (
+                                                <Autocomplete
+                                                  options={stateOptions}
+                                                  value={field.value || ""}
+                                                  onChange={(
+                                                    event,
+                                                    newValue
+                                                  ) => {
+                                                    field.onChange(newValue);
+                                                  }}
+                                                  renderInput={(params) => (
+                                                    <TextField
+                                                      {...params}
+                                                      label="State"
+                                                      className="tv-autocomplete"
+                                                      variant="outlined"
+                                                      fullWidth
+                                                      size="small"
+                                                      sx={{
+                                                        "& .MuiInputBase-root":
+                                                          { height: "25px" },
+                                                        "& .MuiInputBase-input":
+                                                          {
+                                                            padding: "4px 8px",
+                                                          },
+                                                        "& .MuiInputLabel-root":
+                                                          { top: "-2px" },
+                                                      }}
+                                                    />
+                                                  )}
+                                                />
+                                              )}
+                                            />
+                                          </div>
 
-                                    <div className="col-12 col-md-6">
-                                      <Controller
-                                        name="urgency"
-                                        control={control}
-                                        rules={{
-                                          required: "Urgency is required",
-                                        }}
-                                        render={({ field }) => (
-                                          <Autocomplete
-                                            {...field}
-                                            value={field.value || null}
-                                            options={urgencyOptions}
-                                            getOptionLabel={(option) => option}
-                                            isOptionEqualToValue={(
-                                              option,
-                                              value
-                                            ) => option === value}
-                                            onChange={(_, value) =>
-                                              field.onChange(value)
-                                            }
-                                            renderInput={(params) => (
-                                              <TextField
-                                                {...params}
-                                                label="Urgency"
-                                                className="tv-autocomplete"
-                                                variant="outlined"
-                                                error={!!errors.urgency}
-                                                helperText={
-                                                  errors.urgency
-                                                    ?.message as string
-                                                }
-                                                fullWidth
-                                              />
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
+                                          <div className="col-12 col-md-6">
+                                            <TextField
+                                              id="priority"
+                                              label="Priority"
+                                              size="small"
+                                              variant="outlined"
+                                              disabled
+                                              fullWidth
+                                              {...register("priority", {
+                                                required:
+                                                  "priority is required",
+                                              })}
+                                              error={!!errors.priority}
+                                            />
+                                          </div>
 
-                                    <div className="col-12 col-md-6">
-                                      <Controller
-                                        name="assignmentGroup"
-                                        control={control}
-                                        rules={{
-                                          required:
-                                            "Assignment Group is required",
-                                        }}
-                                        render={({ field }) => (
-                                          <Autocomplete
-                                            {...field}
-                                            value={
-                                              assignmentGroups.find(
-                                                (item) =>
-                                                  (item.name ||
-                                                    item.display_value ||
-                                                    item.value) === field.value
-                                              ) || null
-                                            }
-                                            options={assignmentGroups}
-                                            getOptionLabel={(option) =>
-                                              option.name ||
-                                              option.display_value ||
-                                              option.value ||
-                                              ""
-                                            }
-                                            isOptionEqualToValue={(
-                                              option,
-                                              value
-                                            ) => {
-                                              if (
-                                                typeof value === "object" &&
-                                                value !== null
-                                              ) {
-                                                const optionValue =
-                                                  option.name ||
-                                                  option.display_value ||
-                                                  option.value;
-                                                const valueValue =
-                                                  value.name ||
-                                                  value.display_value ||
-                                                  value.value;
-                                                return (
-                                                  optionValue === valueValue
-                                                );
-                                              }
-                                              const optionValue =
-                                                option.name ||
-                                                option.display_value ||
-                                                option.value;
-                                              return optionValue === value;
-                                            }}
-                                            onChange={(_, value) =>
-                                              field.onChange(
-                                                value
-                                                  ? value.name ||
-                                                      value.display_value ||
-                                                      value.value
-                                                  : ""
-                                              )
-                                            }
-                                            renderInput={(params) => (
-                                              <TextField
-                                                {...params}
-                                                label="Assignment Group"
-                                                variant="outlined"
-                                                className="tv-autocomplete"
-                                                error={!!errors.assignmentGroup}
-                                                helperText={
-                                                  errors.assignmentGroup
-                                                    ?.message as string
-                                                }
-                                                fullWidth
-                                              />
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
+                                          <div className="col-12 col-md-6">
+                                            <Controller
+                                              name="assignTo"
+                                              control={control}
+                                              rules={{
+                                                required:
+                                                  "Assigned To is required",
+                                              }}
+                                              render={({ field }) => (
+                                                <Autocomplete
+                                                  {...field}
+                                                  value={field.value || null}
+                                                  options={assignTo}
+                                                  getOptionLabel={(option) =>
+                                                    typeof option === "string"
+                                                      ? option
+                                                      : option.user_name ||
+                                                        option.name ||
+                                                        option.display_value ||
+                                                        option.value ||
+                                                        ""
+                                                  }
+                                                  isOptionEqualToValue={(
+                                                    option,
+                                                    value
+                                                  ) => {
+                                                    const optionValue =
+                                                      option.user_name ||
+                                                      option.name ||
+                                                      option.display_value ||
+                                                      option.value;
+                                                    const valueValue =
+                                                      typeof value === "object"
+                                                        ? value.user_name ||
+                                                          value.name ||
+                                                          value.display_value ||
+                                                          value.value
+                                                        : value;
+                                                    return (
+                                                      optionValue === valueValue
+                                                    );
+                                                  }}
+                                                  onChange={(_, value) =>
+                                                    field.onChange(
+                                                      value
+                                                        ? value.user_name ||
+                                                            value.name ||
+                                                            value.display_value ||
+                                                            value.value
+                                                        : ""
+                                                    )
+                                                  }
+                                                  renderInput={(params) => (
+                                                    <TextField
+                                                      {...params}
+                                                      label="Assigned to"
+                                                      size="small"
+                                                      variant="outlined"
+                                                      className="tv-autocomplete"
+                                                      error={!!errors.assignTo}
+                                                      helperText={
+                                                        errors.assignTo
+                                                          ?.message as string
+                                                      }
+                                                      fullWidth
+                                                      sx={{
+                                                        "& .MuiInputBase-root":
+                                                          { height: "25px" },
+                                                        "& .MuiInputBase-input":
+                                                          {
+                                                            padding: "4px 8px",
+                                                          },
+                                                        "& .MuiInputLabel-root":
+                                                          { top: "-2px" },
+                                                      }}
+                                                    />
+                                                  )}
+                                                />
+                                              )}
+                                            />
+                                          </div>
 
-                                    <div className="col-12 col-md-6">
-                                      <Controller
-                                        name="impact"
-                                        control={control}
-                                        rules={{
-                                          required: "Impact is required",
-                                        }}
-                                        render={({ field }) => (
-                                          <Autocomplete
-                                            {...field}
-                                            value={field.value || null}
-                                            options={impactOptions}
-                                            getOptionLabel={(option) => option}
-                                            isOptionEqualToValue={(
-                                              option,
-                                              value
-                                            ) => option === value}
-                                            onChange={(_, value) =>
-                                              field.onChange(value)
-                                            }
-                                            renderInput={(params) => (
-                                              <TextField
-                                                {...params}
-                                                label="Impact"
-                                                variant="outlined"
-                                                className="tv-autocomplete"
-                                                error={!!errors.impact}
-                                                helperText={
-                                                  errors.impact
-                                                    ?.message as string
-                                                }
-                                                fullWidth
-                                              />
-                                            )}
-                                          />
-                                        )}
-                                      />
-                                    </div>
+                                          <div className="col-12 col-md-6">
+                                            <Controller
+                                              name="urgency"
+                                              control={control}
+                                              rules={{
+                                                required: "Urgency is required",
+                                              }}
+                                              render={({ field }) => (
+                                                <Autocomplete
+                                                  {...field}
+                                                  value={field.value || null}
+                                                  options={urgencyOptions}
+                                                  getOptionLabel={(option) =>
+                                                    option
+                                                  }
+                                                  isOptionEqualToValue={(
+                                                    option,
+                                                    value
+                                                  ) => option === value}
+                                                  onChange={(_, value) =>
+                                                    field.onChange(value)
+                                                  }
+                                                  renderInput={(params) => (
+                                                    <TextField
+                                                      {...params}
+                                                      label="Urgency"
+                                                      className="tv-autocomplete"
+                                                      variant="outlined"
+                                                      size="small"
+                                                      error={!!errors.urgency}
+                                                      helperText={
+                                                        errors.urgency
+                                                          ?.message as string
+                                                      }
+                                                      fullWidth
+                                                      sx={{
+                                                        "& .MuiInputBase-root":
+                                                          { height: "25px" },
+                                                        "& .MuiInputBase-input":
+                                                          {
+                                                            padding: "4px 8px",
+                                                          },
+                                                        "& .MuiInputLabel-root":
+                                                          { top: "-2px" },
+                                                      }}
+                                                    />
+                                                  )}
+                                                />
+                                              )}
+                                            />
+                                          </div>
+
+                                          <div className="col-12 col-md-6">
+                                            <Controller
+                                              name="assignmentGroup"
+                                              control={control}
+                                              rules={{
+                                                required:
+                                                  "Assignment Group is required",
+                                              }}
+                                              render={({ field }) => (
+                                                <Autocomplete
+                                                  {...field}
+                                                  value={field.value || null}
+                                                  options={assignmentGroups}
+                                                  getOptionLabel={(option) =>
+                                                    typeof option === "string"
+                                                      ? option
+                                                      : option.name ||
+                                                        option.display_value ||
+                                                        option.value ||
+                                                        ""
+                                                  }
+                                                  isOptionEqualToValue={(
+                                                    option,
+                                                    value
+                                                  ) =>
+                                                    (option.name ||
+                                                      option.display_value ||
+                                                      option.value) === value
+                                                  }
+                                                  onChange={(_, value) =>
+                                                    field.onChange(
+                                                      value
+                                                        ? value.name ||
+                                                            value.display_value ||
+                                                            value.value
+                                                        : ""
+                                                    )
+                                                  }
+                                                  renderInput={(params) => (
+                                                    <TextField
+                                                      {...params}
+                                                      label="Assignment Group"
+                                                      variant="outlined"
+                                                      size="small"
+                                                      className="tv-autocomplete"
+                                                      error={
+                                                        !!errors.assignmentGroup
+                                                      }
+                                                      helperText={
+                                                        errors.assignmentGroup
+                                                          ?.message as string
+                                                      }
+                                                      fullWidth
+                                                      sx={{
+                                                        "& .MuiInputBase-root":
+                                                          { height: "25px" },
+                                                        "& .MuiInputBase-input":
+                                                          {
+                                                            padding: "4px 8px",
+                                                          },
+                                                        "& .MuiInputLabel-root":
+                                                          { top: "-2px" },
+                                                      }}
+                                                    />
+                                                  )}
+                                                />
+                                              )}
+                                            />
+                                          </div>
+
+                                          <div className="col-12 col-md-6">
+                                            <Controller
+                                              name="impact"
+                                              control={control}
+                                              rules={{
+                                                required: "Impact is required",
+                                              }}
+                                              render={({ field }) => (
+                                                <Autocomplete
+                                                  {...field}
+                                                  value={field.value || null}
+                                                  options={impactOptions}
+                                                  getOptionLabel={(option) =>
+                                                    option
+                                                  }
+                                                  isOptionEqualToValue={(
+                                                    option,
+                                                    value
+                                                  ) => option === value}
+                                                  onChange={(_, value) =>
+                                                    field.onChange(value)
+                                                  }
+                                                  renderInput={(params) => (
+                                                    <TextField
+                                                      {...params}
+                                                      label="Impact"
+                                                      size="small"
+                                                      variant="outlined"
+                                                      className="tv-autocomplete"
+                                                      error={!!errors.impact}
+                                                      helperText={
+                                                        errors.impact
+                                                          ?.message as string
+                                                      }
+                                                      fullWidth
+                                                      sx={{
+                                                        "& .MuiInputBase-root":
+                                                          { height: "25px" },
+                                                        "& .MuiInputBase-input":
+                                                          {
+                                                            padding: "4px 8px",
+                                                          },
+                                                        "& .MuiInputLabel-root":
+                                                          { top: "-2px" },
+                                                      }}
+                                                    />
+                                                  )}
+                                                />
+                                              )}
+                                            />
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <div className="mb-3">
+                                        <TextField
+                                          id="short_description"
+                                          label="Short Description"
+                                          rows={2}
+                                          multiline
+                                          variant="outlined"
+                                          size="small"
+                                          className="tv-autocomplete"
+                                          fullWidth
+                                          {...register("short_description", {
+                                            required:
+                                              "Short Description is required",
+                                          })}
+                                          error={!!errors.short_description}
+                                          helperText={
+                                            errors.short_description
+                                              ?.message as string
+                                          }
+                                        />
+                                      </div>
+
+                                      <div className="mb-3">
+                                        <TextField
+                                          id="description"
+                                          label="Description"
+                                          variant="outlined"
+                                          size="small"
+                                          className="tv-autocomplete"
+                                          rows={3}
+                                          multiline
+                                          fullWidth
+                                          {...register("description", {
+                                            required: "Description is required",
+                                          })}
+                                          error={!!errors.description}
+                                          helperText={
+                                            errors.description
+                                              ?.message as string
+                                          }
+                                        />
+                                      </div>
+                                      <div className="mb-4">
+                                        <TextField
+                                          id="comments_and_work_notes"
+                                          label="Comments / Work Notes"
+                                          variant="outlined"
+                                          size="small"
+                                          fullWidth
+                                          className="tv-autocomplete"
+                                          multiline
+                                          rows={2}
+                                          {...register(
+                                            "comments_and_work_notes"
+                                          )}
+                                          InputLabelProps={{
+                                            shrink: !!watch(
+                                              "comments_and_work_notes"
+                                            ), // label moves up if value exists
+                                          }}
+                                          error={
+                                            !!errors.comments_and_work_notes
+                                          }
+                                          helperText={
+                                            errors.comments_and_work_notes
+                                              ?.message as string
+                                          }
+                                        />
+                                      </div>
+
+                                      <div className="mb-3">
+                                        <TextField
+                                          id="resolution_notes"
+                                          label="Resolution Notes"
+                                          rows={2}
+                                          multiline
+                                          variant="outlined"
+                                          size="small"
+                                          className="tv-autocomplete"
+                                          fullWidth
+                                          // {...register("resolution_notes", {
+                                          //   required: "Resolution Notes is required",
+                                          // })}
+                                          {...register("resolution_notes")}
+                                          InputLabelProps={{
+                                            shrink: !!watch("resolution_notes"), // label moves up if value exists
+                                          }}
+                                          // error={!!errors.resolution_notes}
+                                          // helperText={
+                                          //               errors.resolution_notes
+                                          //                 ?.message as string
+                                          //             }
+                                        />
+                                      </div>
+
+                                      <div className="mt-4 text-center">
+                                        <button
+                                          type="submit"
+                                          className="btn update-button"
+                                          disabled
+                                        >
+                                          {isSubmitting ? (
+                                            <>
+                                              <span
+                                                className="spinner-border spinner-border-sm me-2"
+                                                role="status"
+                                                aria-hidden="true"
+                                              ></span>
+                                              Updating...
+                                            </>
+                                          ) : (
+                                            "Update Ticket"
+                                          )}
+                                        </button>
+                                      </div>
+                                    </form>
                                   </div>
                                 </div>
-
-                                <div className="mb-3">
-                                  <TextField
-                                    id="short_description"
-                                    label="Short Description"
-                                    rows={2}
-                                    multiline
-                                    variant="outlined"
-                                    className="tv-autocomplete"
-                                    fullWidth
-                                    {...register("short_description", {
-                                      required: "Short Description is required",
-                                    })}
-                                    error={!!errors.short_description}
-                                  />
-                                </div>
-
-                                <div className="mb-3">
-                                  <TextField
-                                    id="description"
-                                    label="Description"
-                                    variant="outlined"
-                                    className="tv-autocomplete"
-                                    rows={3}
-                                    multiline
-                                    fullWidth
-                                    {...register("description", {
-                                      required: "Description is required",
-                                    })}
-                                    error={!!errors.description}
-                                  />
-                                </div>
-                                <div className="mb-4">
-                                  <TextField
-                                    id="comments_and_work_notes"
-                                    label="Comments / Work Notes"
-                                    variant="outlined"
-                                    fullWidth
-                                    className="tv-autocomplete"
-                                    multiline
-                                    rows={2}
-                                    {...register("comments_and_work_notes")}
-                                  />
-                                </div>
-
-                                <div className="mb-3">
-                                  <TextField
-                                    id="resolution_notes"
-                                    label="Resolution Notes"
-                                    rows={2}
-                                    multiline
-                                    variant="outlined"
-                                    className="tv-autocomplete"
-                                    fullWidth
-                                    {...register("resolution_notes", {
-                                      required: "Short Description is required",
-                                    })}
-                                    error={!!errors.short_description}
-                                  />
-                                </div>
-
-                                <div className="mt-4 text-center">
-                                  <button
-                                    type="submit"
-                                    className="btn update-button"
-                                  >
-                                    {isSubmitting ? (
-                                      <>
-                                        <span
-                                          className="spinner-border spinner-border-sm me-2"
-                                          role="status"
-                                          aria-hidden="true"
-                                        ></span>
-                                        Updating...
-                                      </>
-                                    ) : (
-                                      "Update Ticket"
-                                    )}
-                                  </button>
-                                </div>
-                              </form>
-                            </div>
+                              </AccordionDetails>
+                            </Accordion>
                           </div>
-                        </AccordionDetails>
-                      </Accordion>
+                        )}
                     </div>
-                  )}
+                  );
+                })
+            ) : (
+              <div className="text-muted text-center p-4">
+                <div className="mb-2">
+                  {selectedFilter === "AssignTo" && "No tickets found."}
+                  {selectedFilter === "AssignmentGroup" &&
+                    "No AssignmentGroup tickets found."}
+                  {selectedFilter === "Unassigned" &&
+                    "No unassigned tickets found."}
                 </div>
-              );
-            })
-          ) : (
-            <div className="text-muted text-center p-4">
-              <div className="mb-2">
-                {selectedFilter === "person" && "No personal tickets found."}
-                {selectedFilter === "group" && "No group tickets found."}
-                {selectedFilter === "personoff" &&
-                  "No unassigned tickets found."}
+                {searchTerm && (
+                  <small className="text-muted">
+                    Try clearing the search or switching to a different filter.
+                  </small>
+                )}
               </div>
-              {searchTerm && (
-                <small className="text-muted">
-                  Try clearing the search or switching to a different filter.
-                </small>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };
 

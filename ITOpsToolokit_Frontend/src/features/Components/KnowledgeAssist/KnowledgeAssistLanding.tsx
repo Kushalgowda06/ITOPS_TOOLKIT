@@ -129,7 +129,7 @@ const KnowledgeAssistLanding = () => {
   const callDuplicateArticles = async () => {
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/kb_management/api/v1/find_duplicate_knowledge_articles/",
+        "https://backend.autonomousitopstoolkit.com/kb_management/api/v1/find_duplicate_knowledge_articles/",
         {
           "table_name": "Knowledge_articles"
         }, {
@@ -160,7 +160,7 @@ const KnowledgeAssistLanding = () => {
   const CallKnowledgeArticles = async () => {
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/kb_management/api/v1/retrieve_knowledge_articles/",
+        "https://backend.autonomousitopstoolkit.com/kb_management/api/v1/retrieve_knowledge_articles/",
         {
           "table_name": "Knowledge_articles"
         }, {
@@ -191,7 +191,7 @@ const KnowledgeAssistLanding = () => {
   const callMergeArticles = async (articles) => {
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/llm/api/v1/merge_kb_articles/",
+        "https://backend.autonomousitopstoolkit.com/llm/api/v1/merge_kb_articles/",
         articles, {
         auth: {
           username: 'rest',
@@ -269,7 +269,7 @@ const KnowledgeAssistLanding = () => {
     console.log(articles, "refined")
     try {
       const response: any = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/llm/api/v1/refine_kb_articles/",
+        "https://backend.autonomousitopstoolkit.com/llm/api/v1/refine_kb_articles/",
         {
           kb_article: articles
         }, {
@@ -367,6 +367,12 @@ const KnowledgeAssistLanding = () => {
       }
     }
   }
+const keyNameMap = {
+  grammar: "Language and Professionalism and sent it to bottom ",
+  complementary: "Redundant",
+  conflicting: "Contradictory",
+  overlapping: "Enrichment",
+};
 
   const mergedDetails = () => {
     console.log(mergedResponse, "duplicateArticlesResponse")
@@ -377,7 +383,7 @@ const KnowledgeAssistLanding = () => {
     return mergedResponse && <>
       <div className='container text-white text-start'>
         <div className='d-flex border-bottom pb-3 border-white justify-content-between'>
-          <div className="">
+          <div className="knowledge_card_title">
             <div> Merge completed successfully</div>
             <div> Combined two articles in one comprehensive articles </div>
           </div>
@@ -389,7 +395,7 @@ const KnowledgeAssistLanding = () => {
         </div>
         <div className="row pt-3 overflow-auto" style={{ height: '60vh' }}>
           <div className="col-6">
-            <span className='text-start'> Article title</span>
+            <span className='text-start knowledge_card_title'> Article title</span>
             <div className="glass-bg glass-shadow px-3 py-2 d-flex justify-content-between">
               <div>
                 <div className='card_p'> Category </div>
@@ -402,20 +408,21 @@ const KnowledgeAssistLanding = () => {
               </div>
 
             </div>
-            <p>Comprehensive Merged Content</p>
+            <p className=' knowledge_card_title'>Comprehensive Merged Content</p>
             <div className="glass-bg card_p px-3 py-2 glass-shadow">
 
-              <div dangerouslySetInnerHTML={{ __html: cleanHtml }} />
+              <div className="rendered-html text-white" dangerouslySetInnerHTML={{ __html: cleanHtml }} />
             </div>
           </div>
           <div className="col-6">
-            <h6>Merge Analytics Details</h6>
+            <h6 className='knowledge_card_title'>Merge Analytics Details</h6>
             <div className="px-3 py-2">
               {
                 Object.keys(mergedResponse.details).map((curr, index) => {
+                   const displayName = keyNameMap[curr] || curr;
                   return <>
-                    <div className='p-2 text-capitalize'>
-                      {curr}
+                    <div className='p-2 text-capitalize knowledge_card_title'>
+                      {displayName}
                     </div>
                     <div className="py-2 card_p glass-bg glass-shadow">
                       {mergedResponse.details[curr].map((innerCUrr, index) => {
@@ -431,7 +438,7 @@ const KnowledgeAssistLanding = () => {
           </div>
         </div>
         <div className='d-flex justify-content-center'>
-          <button onClick={() => setMergedConfirmation(true)} className='d-flex glass-bg glass-shadow rounded card_p cursor-pointer p-2'> Submit</button>
+          <button onClick={() => setMergedConfirmation(true)} className='d-flex glass-bg glass-shadow rounded card_p  mt-2 cursor-pointer p-2'> Submit</button>
         </div>
       </div>
     </>
@@ -450,7 +457,7 @@ const KnowledgeAssistLanding = () => {
             return <div className='col-6 px-3 mt-3 rounded cursor-pointer'>
               <div className='glass-bg  glass-shadow '>
                 <div className="d-flex justify-content-between" >
-                  <div className='p-3 text-start'>
+                  <div className='p-3 text-start knowledge_card_title'>
                     <div className=''>{tempArticlesToMerged[curr]?.metadata.title}</div>
                     <div className='card_p'>{tempArticlesToMerged[curr]?.metadata.author}</div>
                   </div>
@@ -510,7 +517,7 @@ const KnowledgeAssistLanding = () => {
                       <div className='card_p bg-light glass-bg fw-bold text-black glass-shadow rounded px-3'>{Object.keys(curr[Object.keys(curr)[0]][0]).length} duplicates</div>
                     </div>
                   </div>
-                  <div className='glass-bg px-2 text-start py-3 rounded-bottom border border-top-0'>
+                  <div className='glass-bg px-2 text-start py-3 rounded-bottom border border-top-0' style={{ height: '22vh' }}>
                     {
                       Object.keys(curr[Object.keys(curr)[0]][0]).map((InnerCurr, innerIndex) => {
                         console.log(InnerCurr, curr[Object.keys(curr)[0]][0][InnerCurr], "InnerCurr")
@@ -559,7 +566,7 @@ const KnowledgeAssistLanding = () => {
                 setlowScoringArticleContent(false)
               }}>
                 <div className="d-flex justify-content-between" >
-                  <div className='p-3 text-start'>
+                  <div className='p-3 text-start knowledge_card_title'>
                     <div className=''>{curr?.metadata.number} : {curr?.metadata.title}</div>
                     <div className='card_p'>By {curr?.metadata.author}</div>
                   </div>
@@ -590,13 +597,13 @@ const KnowledgeAssistLanding = () => {
     // SelectedLowScoringArticle
     console.log(selectedLowScoringArticle, "selectedLowScoringArticle")
     return selectedLowScoringArticle && <div className='container px-3 mt-3'>
-      <p className='text-white'>Current Content</p>
+      <p className='text-white knowledge_card_title'>Current Content</p>
       <div className='glass-bg  glass-shadow ' onClick={() => {
         // setSelectedLowScoringArticle(curr)
         // setshowLowScoringArticleDetailsContent(true) 
       }}>
         <div className="d-flex justify-content-between" >
-          <div className='p-3 text-start'>
+          <div className='p-3 text-start knowledge_card_title'>
             <div className=''>{selectedLowScoringArticle?.metadata.number} : {selectedLowScoringArticle?.metadata.title}</div>
             <div className='card_p'>By {selectedLowScoringArticle?.metadata.author}</div>
           </div>
@@ -617,7 +624,7 @@ const KnowledgeAssistLanding = () => {
         <div onClick={() => {
           setlowScoringArticleContent(true)
           setshowLowScoringArticleDetailsContent(false)
-          }} className='d-flex glass-bg glass-shadow rounded card_p p-2'>Close</div>
+        }} className='d-flex glass-bg glass-shadow rounded card_p p-2'>Close</div>
         <div onClick={() => {
           setshowLowScoringArticleDetailsContent(false)
           setShowRefinedArticleModal(true)
@@ -629,6 +636,8 @@ const KnowledgeAssistLanding = () => {
     </div>
   }
 
+  const [editingRefinedArticle, seteditingRefinedArticle] = useState(false)
+  const [editableRefinedArticle, setEditableRefinedArticle] = useState<any>()
 
   const refinedArticleDetails = () => {
     // SelectedLowScoringArticle 
@@ -637,38 +646,124 @@ const KnowledgeAssistLanding = () => {
       FORBID_TAGS: ['style'],
       FORBID_ATTR: ['style', 'class'],
     });
-    return (refinedArtcileResponse.length > 1) && <div className='container px-3 mt-3'>
-      <p className='text-start text-white'>Refined Content</p>
-      <div className='glass-bg  glass-shadow ' onClick={() => {
-        // setSelectedLowScoringArticle(curr)
-        // setshowLowScoringArticleDetailsContent(true) 
-      }}>
-        <div className="d-flex justify-content-between" >
-          <div className='p-3 text-start'>
-            <div className=''>{selectedLowScoringArticle?.metadata.number} : {selectedLowScoringArticle?.metadata.title}</div>
-            <div className='card_p'>By {selectedLowScoringArticle?.metadata.author}</div>
+    return (refinedArtcileResponse.length > 1 && !editingRefinedArticle) ?
+      <div className='container px-3 mt-3'>
+        <p className='text-start text-white knowledge_card_title'>Refined Content</p>
+        <div className='glass-bg  glass-shadow ' onClick={() => {
+          // setSelectedLowScoringArticle(curr)
+          // setshowLowScoringArticleDetailsContent(true) 
+        }}>
+          <div className="d-flex justify-content-between" >
+            <div className='p-3 text-start knowledge_card_title'>
+              <div className=''>{selectedLowScoringArticle?.metadata.number} : {selectedLowScoringArticle?.metadata.title}</div>
+              <div className='card_p'>By {selectedLowScoringArticle?.metadata.author}</div>
+            </div>
+            <div className='p-3 card_p'>
+
+              {/* <div className='card_p'>Rating : {selectedLowScoringArticle?.metadata.rating}</div> */}
+              {/* <div className='card_p'>By {selectedLowScoringArticle?.metadata.author}</div> */}
+
+            </div>
           </div>
-          <div className='p-3 card_p'>
-
-            {/* <div className='card_p'>Rating : {selectedLowScoringArticle?.metadata.rating}</div> */}
-            {/* <div className='card_p'>By {selectedLowScoringArticle?.metadata.author}</div> */}
-
+          <div className='card_p px-3 py-1 overflow-auto text-start' style={{ height: '40vh' }}>
+            <div className="rendered-html text-white" dangerouslySetInnerHTML={{ __html: cleanHtmlRefined }} />
+          </div>
+          <div>
           </div>
         </div>
-        <div className='card_p px-3 py-1 overflow-auto text-start' style={{ height: '40vh' }}>
-          <div dangerouslySetInnerHTML={{ __html: cleanHtmlRefined }} />
+        <div className='d-flex justify-content-center gap-3 px-3 py-2'>
+          <div onClick={() => {
+            // setShowRefinedArticleModal(false)
+            // setRefinedConfirmation(true)
+            const textContent = htmlToText(cleanHtmlRefined);
+            setEditableRefinedArticle(textContent);
+            seteditingRefinedArticle(true);
+          }} className='d-flex glass-bg glass-shadow rounded cursor-pointer card_p p-2'>Edit Article </div>
+          <div onClick={() => {
+            setShowRefinedArticleModal(false)
+            setRefinedConfirmation(true)
+          }} className='d-flex glass-bg glass-shadow cursor-pointer rounded card_p p-2'>Submit</div>
         </div>
+      </div> : <>
+
         <div>
-        </div>
-      </div>
-      <div className='d-flex justify-content-center gap-3 px-3 py-2'>
-        <div onClick={() => {
-          setShowRefinedArticleModal(false)
-          setRefinedConfirmation(true)
-        }} className='d-flex glass-bg glass-shadow rounded card_p p-2'>Submit </div>
+          <div className="mb-2 p-2 mb-2 text-white " style={{
+            background: 'transparent',
+            borderRadius: '4px',
+            fontSize: '0.8rem',
+            color:"white",
+            border: '1px solid #90caf9'
+          }}>
+            <strong>📝 Formatting Guide:</strong>
+            <div style={{ marginTop: '0.5rem' }}>
+              • <strong>**Bold Text**</strong>
+              • <em>*Italic Text*</em> •
+              <code>=== Main Heading ===</code> •
+              <code>## Sub Heading</code> • <code>•
+                Bullet Point</code>
+            </div>
+          </div>
+          <Form.Control
+            as="textarea"
+            rows={20}
+            value={editableRefinedArticle}
+            onChange={(e) => setEditableRefinedArticle(e.target.value)}
+            style={{
+              fontFamily: 'system-ui, -apple-system, sans-serif',
+              fontSize: '0.8rem',
+              lineHeight: '1.0',
+              maxHeight: '800px',
+              border: '2px solid #90caf9',
+              borderRadius: '8px',
+              padding: '1rem',
+              background: 'transparent',
+              color: 'white'
+            }}
+            placeholder="Edit your content here using simple formatting:
 
-      </div>
-    </div>
+=== Main Title ===
+
+## Section Heading
+
+**Bold 1text** for emphasis
+*Italic text* for highlights
+
+• Bullet point 1
+• Bullet point 2
+
+Regular paragraphs separated by blank lines..."
+          />
+        </div>
+
+
+        <div className="d-flex justify-content-center gap-3 py-2">
+          <button className="m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold text-white glass-bg glass-shadow rounded px-3 text-white py-1"
+            onClick={() => seteditingRefinedArticle(false)}
+          >
+            Cancel Changes
+          </button >
+          <button className="m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold text-white glass-bg glass-shadow rounded px-3 text-white py-1"
+
+            onClick={() => {
+              // Convert the edited text back to HTML format
+              const htmlContent = textToHtml(editableRefinedArticle);
+              // const updatedArticle = {
+              //   ...editableRefinedArticle,
+              //   content: editableRefinedArticle.editableTextContent || editableRefinedArticle.content,
+              //   htmlContent: htmlContent
+              // };
+              setRefinedArticleResponse(htmlContent);
+              seteditingRefinedArticle(false);
+            }}
+
+          >
+            {/* <HiCheckCircle className="me-2" /> */}
+            Save Changes
+          </button >
+        </div>
+
+
+      </>
   }
 
 
@@ -1727,9 +1822,11 @@ The issue occurred after the user returned to office after working remotely for 
           show={modalMergedShow}
           backdrop={true}
           // backdropClassName="glass-bg"
+          data-bs-theme="dark" 
           onHide={() => {
             setModalDuplicateDetailsShow(true)
-            setModalMergedShow(false)}
+            setModalMergedShow(false)
+          }
           }
           size="xl"
           aria-labelledby="contained-modal-title-vcenter"
@@ -1900,6 +1997,7 @@ The issue occurred after the user returned to office after working remotely for 
           </Modal.Body>
         </Modal>
 
+        {/* generate article from table  */}
         <Modal
           show={showArticleDetails}
           onHide={() => {
@@ -1909,10 +2007,9 @@ The issue occurred after the user returned to office after working remotely for 
             setIsEditingCreatedArticle(false);
           }}
           size="xl"
-
         >
-          <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className='bg-gradient-to-br from-neon-blue to-royal-500' style={{ color: 'white' }}>
-            <Modal.Title>
+          <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className='bg-gradient-to-br glass-bg  model_header custom-modal-title from-neon-blue to-royal-500' style={{ color: 'white' }}>
+            <Modal.Title className="custom-modal-title">
               {selectedArtcle.length && !createdKbArticle ? "Ticket Details" : 'Article Details'}
             </Modal.Title>
           </Modal.Header>
@@ -1921,26 +2018,27 @@ The issue occurred after the user returned to office after working remotely for 
               {console.log(selectedArtcle[0], createdKbArticle, 'test')}
 
               {selectedArtcle.length && !createdKbArticle ? <div className='p-3'>
-                <div className='d-flex justify-content-between'>
-                  <h6> Incident ID: {selectedArtcle[0].incidents[0]} </h6>
+                <div className='d-flex justify-content-between '>
+                  <h6 className='knowledge_card_title'> Incident ID: {selectedArtcle[0].incidents[0]} </h6>
                   <div className='d-flex'>
-                    <h6>Category : </h6>
-                    <h6 className=''> {selectedArtcle[0].category}</h6>
+                    <h6 className='knowledge_card_title'>Category : </h6>
+                    <h6 className='knowledge_card_title'> {selectedArtcle[0].category}</h6>
                   </div>
                 </div>
-                <h6 className='pt-2'>Short Description</h6>
+                <h6 className='pt-2 knowledge_card_title'>Short Description</h6>
                 <p className='text-sm'>{selectedArtcle[0].short_description}</p>
-                <h6 className='pt-2'>Description</h6>
+                <h6 className='pt-2 knowledge_card_title'>Description</h6>
                 <p className='text-sm'>{selectedArtcle[0].description}</p>
-                <h6 className='pt-2'>Resolution Notes</h6>
+                <h6 className='pt-2 knowledge_card_title'>Resolution Notes</h6>
                 <p className='text-sm'>{selectedArtcle[0].resolution_notes}</p>
 
-              </div> : !isEditingCreatedArticle ? <> <div className='text-start'
+              </div> : !isEditingCreatedArticle ? <> <div className='text-start rendered-html text-white'
 
                 dangerouslySetInnerHTML={{
                   __html: cleanHtml(DOMPurify.sanitize(createdKbArticle, {
                     FORBID_TAGS: ['style'],
                     FORBID_ATTR: ['style', 'class'],
+                     KEEP_CONTENT: false,
                   }))
                 }}
               /></> : <>
@@ -1970,6 +2068,7 @@ The issue occurred after the user returned to office after working remotely for 
                       // fontSize: '0.95rem',
                       lineHeight: '1.6',
                       minHeight: '500px',
+                      fontSize: '12px',
                       border: '2px solid #90caf9',
                       borderRadius: '8px',
                       padding: '1rem',
@@ -1995,7 +2094,7 @@ Regular paragraphs separated by blank lines..."
 
             </>
           </Modal.Body>
-          <Modal.Footer>
+          <Modal.Footer className='d-flex justify-content-center gap-3'>
             {!createdKbArticle ?
               <button className="glass-bg glass-shadow rounded px-3 text-white py-1 m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold text-white"
                 disabled={isLoading}
@@ -2007,7 +2106,7 @@ Regular paragraphs separated by blank lines..."
                     const apiPass = '!fi$5*4KlHDdRwdbup%ix'
 
                     const response = await axios.post(
-                      'https://predemo_backend.autonomousitopstoolkit.com/llm/api/v1/refine_kb_articles',
+                      'https://backend.autonomousitopstoolkit.com/llm/api/v1/refine_kb_articles',
                       {
                         kb_article: `short description - ${selectedArtcle[0].short_description}- Description - ${selectedArtcle[0].description}-Resolution notes-${selectedArtcle[0].resolution_notes}`
                       },
@@ -2122,10 +2221,10 @@ Regular paragraphs separated by blank lines..."
         </Modal>
 
         <Modal backdrop={true} show={mergedConfirmation} centered>
-          <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className='bg-gradient-to-br from-neon-blue to-royal-500' style={{ color: 'white' }}>
+          <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className=' knowledge_card_title bg-gradient-to-br from-neon-blue to-royal-500' style={{ color: 'white' }}>
             <Modal.Title>Success</Modal.Title>
           </Modal.Header>
-          <Modal.Body className='text-white'>Article merged successfully</Modal.Body>
+          <Modal.Body className='text-white knowledge_card_title'>Article merged successfully</Modal.Body>
           <Modal.Footer className='d-flex justify-content-center'>
             <button className="glass-bg glass-shadow rounded px-3 text-white py-1 m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold text-white cursor-pointer" onClick={() => {
               setMergedConfirmation(false)
@@ -2138,6 +2237,22 @@ Regular paragraphs separated by blank lines..."
           </Modal.Footer>
         </Modal>
 
+
+        <Modal backdrop={true} show={refinedConfirmation} centered>
+          <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className='bg-gradient-to-br from-neon-blue to-royal-500' style={{ color: 'white' }}>
+            <Modal.Title>Success</Modal.Title>
+          </Modal.Header>
+          <Modal.Body className='text-white'>Aricle refined successfully</Modal.Body>
+          <Modal.Footer className='d-flex justify-content-center'>
+            <button className="glass-bg glass-shadow rounded px-3 text-white py-1 m-0 text-sm text-md text-lg text-xl text-xxl text-big fw-bold text-white cursor-pointer" onClick={() => {
+              setRefinedConfirmation(false)
+              setshowLowScoringArticleDetailsContent(false)
+              setlowScoringArticleContent(false)
+            }}>
+              OK
+            </button>
+          </Modal.Footer>
+        </Modal>
 
         <Modal backdrop={true} show={refinedConfirmation} centered>
           <Modal.Header data-bs-theme="dark" closeButton={!isMerging} className='bg-gradient-to-br from-neon-blue to-royal-500' style={{ color: 'white' }}>

@@ -26,7 +26,7 @@ const MainLayout = () => {
   const [currentFilter, setCurrentFilter] = useState("incident");
 
   const handleWorkNotesUpdate = (workNotes: string) => {
-    setWorkNotesFromTechAssist(workNotes);
+    setWorkNotesFromTechAssist( workNotesFromTechAssist + "" + workNotes);
     console.log("Work notes updated from TechAssist:", workNotes);
   };
   console.log("currentUsers", currentUsers);
@@ -225,7 +225,7 @@ const MainLayout = () => {
     setKnowledgeAssistLoading(true);
     try {
       const response = await axios.post(
-        "https://predemo_backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
+        "https://backend.autonomousitopstoolkit.com/kb_management/api/v1/get_contextual_response/",
         { query: shortDescription + description },
         {
           auth: {

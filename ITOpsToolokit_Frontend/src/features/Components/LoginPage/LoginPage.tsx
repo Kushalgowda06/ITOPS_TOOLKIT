@@ -101,7 +101,7 @@ function LoginPage() {
       existsUser = true
       // Navigate after "Tudum" animation completes (2.5s total)
       setTimeout(() => {
-        navigate('/home');
+        navigate('/');
       }, 3100);
     } else {
       // setIsLoading(false);
@@ -241,15 +241,15 @@ function LoginPage() {
       scope: "",
     };
 
-    try {
-      Api.postAuthData(testapi.authtoken, tokenRequestBody).then(
-        (response: any) => {
-          dispatch(setFinopsToken(response?.data?.access_token));
-        }
-      );
-    } catch (error) {
-      console.error("Error fetching token:", error);
-    }
+    // try {
+    //   Api.postAuthData(testapi.authtoken, tokenRequestBody).then(
+    //     (response: any) => {
+    //       dispatch(setFinopsToken(response?.data?.access_token));
+    //     }
+    //   );
+    // } catch (error) {
+    //   console.error("Error fetching token:", error);
+    // }
   }, []);
 
 

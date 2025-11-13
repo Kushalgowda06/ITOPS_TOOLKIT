@@ -23,6 +23,7 @@ export default function ProblemAssist() {
   const [problemData, setProblemData] = useState([]);
   const [toastOpen, setToastOpen] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>("");
+  const [state, setState] = useState([]);
 //  const [createChange, setCreateChange] = useState<string>("");
   const [toastSeverity, setToastSeverity] = useState<
     "success" | "error" | "info"
@@ -86,7 +87,7 @@ export default function ProblemAssist() {
         setIsLoading(true)
         const { id, ...cleanedData } = submitData;
         const response = await axios.post(
-          "https://predemo_backend.autonomousitopstoolkit.com/database/api/v1/update_sql_data/", // corrected from hrrp to http
+          "https://backend.autonomousitopstoolkit.com/database/api/v1/update_sql_data/", // corrected from hrrp to http
           {
             table_name: "prblm_tkt_details",
             update_dict: cleanedData,
@@ -127,7 +128,7 @@ export default function ProblemAssist() {
       try {
         const { id, ...cleanedData } = submitData;
         const response = await axios.post(
-          "https://predemo_backend.autonomousitopstoolkit.com/database/api/v1/update_sql_data/", // corrected from hrrp to http
+          "https://backend.autonomousitopstoolkit.com/database/api/v1/update_sql_data/", // corrected from hrrp to http
           {
             table_name: "prblm_tkt_details",
             update_dict: cleanedData,
@@ -288,7 +289,7 @@ export default function ProblemAssist() {
         setIsLoading(true)
         try {
           const response = await axios.post(
-            "https://predemo_backend.autonomousitopstoolkit.com/database/api/v1/retrieve_sql_data/", // corrected from hrrp to http
+            "https://backend.autonomousitopstoolkit.com/database/api/v1/retrieve_sql_data/", // corrected from hrrp to http
             {
               table_name: "prblm_tkt_details",
               columns: [],
@@ -323,7 +324,25 @@ export default function ProblemAssist() {
   const handleToastClose = () => {
     setToastOpen(false);
   };
+  
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const response = await serviceNowAxios.get(
+            `https://cisicmpengineering1.service-now.com/api/now/table/sys_choice?sysparm_query=name=problem^element=state&sysparm_fields=label,value`
+          );
+  
+          const problemTasks = response?.data?.result || [];
+          setState(problemTasks);
+        } catch (error) {
+          console.error("Error fetching problem tasks: ", error);
+        }
+      };
+      fetchData();
+    }, []);
+
   const enrichedApprovedData = useMemo(() => enrichApprovedData(approvedData, problemData), [approvedData, problemData]);
+ useEffect(()=>{setSelectedTicket(null)},[status])
   return (
     <div className="container-fluid py-1 Itsm_bg_image  h-100">
             <Snackbar
@@ -354,14 +373,15 @@ export default function ProblemAssist() {
              
             </Alert>
           </Snackbar>
-      <div className="row gx-3">
-        <div className="col-12 col-lg-5 mb-3 mb-lg-0 overflow-auto prb_list">
+      <div className="row ">
+        <div className="col-12 col-lg-5 mb-3 mb-lg-0 prb_list">
           <HeaderLeft
             status={status}
             setStatus={setStatus}
             search={search}
             setSearch={setSearch}
           />
+          <div className="itsm_pannel overflow-scroll">
           {status==="Approved" ?
          
          (enrichedApprovedData
@@ -376,6 +396,7 @@ export default function ProblemAssist() {
                 problem={problem}
                 onClick={setSelectedTicket}
                 isActive={selectedTicket?.id === problem.id}
+                state={state} 
               />
             ))
        )  :(approvedData
@@ -395,17 +416,19 @@ export default function ProblemAssist() {
                 problem={problem}
                 onClick={setSelectedTicket}
                 isActive={selectedTicket?.id === problem.id}
+                 state={state} 
               />
             )))}
         </div>
-
+        </div>
         <div className="col-12 col-lg-7">
           <HeaderRight />
-          <div className="prb-content-box p-3 mt-2">
+          <div className="prb-content-box prb_ticket_height p-3 mt-2">
             <TicketDetails
               ticket={selectedTicket}
               setSelectedTicket={setSelectedTicket}
               setIncidentNumbers={setIncidentNumbers}
+               state={state} 
             />
 
 {status === "Recommended" ? (<>
@@ -501,6 +524,8 @@ export default function ProblemAssist() {
                 setReason={setRejectionReason}
                 saveButtonName={"Save"}
                 title={"Please mention the reason for rejection"}
+                quizListData={null} 
+                setSelectedQuizId={null}
               />
                 <Loader isLoading={isLoading} load={null} />
             </div>

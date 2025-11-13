@@ -302,8 +302,6 @@ $scrollbar-border-radius: 14px;
 
 .ISTMAssit {
   padding: 1rem;
-  overflow: scroll;
-  height: 14.4rem;
   font-weight: 600;
   font-size: 11px;
   line-height: 10px;
@@ -340,7 +338,7 @@ $scrollbar-border-radius: 14px;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
- 
+
 .itsm_pannel::-webkit-scrollbar {
   display: none;
 }
@@ -626,11 +624,11 @@ $scrollbar-border-radius: 14px;
 
 .itsm_form {
   .MuiInputBase-input.MuiOutlinedInput-input {
-    height: 0px;
+    // height: 0px;
     font-size: 11px !important;
   }
 
-  .css-14s5rfu-MuiFormLabel-root-MuiInputLabel-root {
+  .MuiFormLabel-root-MuiInputLabel-root {
     font-size: 11px !important;
     margin-top: -6px !important;
   }
@@ -889,12 +887,12 @@ $scrollbar-border-radius: 14px;
     position: absolute;
     inset: 0;
     padding: 1px;
-    background: linear-gradient(135deg,
-        rgba(255, 255, 255, 0.4) 0%,
-        rgba(255, 255, 255, 0.1) 25%,
-        rgba(255, 255, 255, 0.05) 50%,
-        rgba(255, 255, 255, 0.1) 75%,
-        rgba(255, 255, 255, 0.3) 100%);
+    // background: linear-gradient(135deg,
+    //     rgba(255, 255, 255, 0.4) 0%,
+    //     rgba(255, 255, 255, 0.1) 25%,
+    //     rgba(255, 255, 255, 0.05) 50%,
+    //     rgba(255, 255, 255, 0.1) 75%,
+    //     rgba(255, 255, 255, 0.3) 100%);
     border-radius: 12px;
     mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
     mask-composite: xor;
@@ -969,7 +967,7 @@ $scrollbar-border-radius: 14px;
   }
 
   &.status-resolved {
-    background: linear-gradient(135deg, #2196f3, #42a5f5);
+    background: linear-gradient(135deg, #757575, #9e9e9e);
     color: white;
   }
 
@@ -978,8 +976,9 @@ $scrollbar-border-radius: 14px;
     color: white;
   }
 
-  &.status-canceled {
-    background: linear-gradient(135deg, #757575, #9e9e9e);
+  &.status-assess {
+    
+    background: linear-gradient(135deg, #2196f3, #42a5f5);
     color: white;
   }
 
@@ -987,6 +986,11 @@ $scrollbar-border-radius: 14px;
     background: linear-gradient(135deg, #ff9800, #ffb74d);
     color: white;
   }
+   &.status-work-in-progress {
+    background: linear-gradient(135deg, #ff9800, #ffb74d);
+    color: white;
+  }
+  
 }
 
 /* Priority Badge */
@@ -1107,8 +1111,7 @@ $scrollbar-border-radius: 14px;
     &:hover {
       color: rgba(255, 255, 255, 0.9) !important;
       background-color: rgba(255, 255, 255, 0.1) !important;
-      width: 0.7rem;
-      height: 0.7rem;
+     
 
     }
   }
@@ -1178,6 +1181,7 @@ $scrollbar-border-radius: 14px;
   backdrop-filter: blur(20px) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 8px !important;
+  font-size: 10px;
 
   .MuiAutocomplete-option {
     color: white !important;
@@ -1230,7 +1234,11 @@ $scrollbar-border-radius: 14px;
     }
   }
 }
-
+.dropdown-menu {
+  position: absolute !important;
+  z-index: 9999 !important;
+  overflow: visible !important;
+}
 /* Global Glass Morphism Navigation Styles */
 .glass-header-nav {
   background: rgba(255, 255, 255, 0.1) !important;
@@ -1239,7 +1247,8 @@ $scrollbar-border-radius: 14px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2) !important;
   box-shadow: 0px 8px 32px rgba(0, 0, 0, 0.1),
     0px 2px 8px rgba(255, 255, 255, 0.3) inset !important;
-
+ position: relative !important;
+  z-index: 1050 !important; // same as Bootstrap modal
   // Text styling for header nav
   .navbar-brand,
   .nav-link,
@@ -1330,6 +1339,10 @@ $scrollbar-border-radius: 14px;
   }
 }
 
+// .glass-content-area, .main-content {
+//   overflow: visible !important;
+// }
+
 /* Content Area Glass Styling */
 .glass-content-area {
   // background: rgba(255, 255, 255, 0.05) !important;
@@ -1338,6 +1351,7 @@ $scrollbar-border-radius: 14px;
   border-radius: 0 !important;
   min-height: calc(100vh - 120px);
 }
+
 
 /* Glass Notice/Alert Card */
 .glass-notice-card {
@@ -1355,10 +1369,7 @@ $scrollbar-border-radius: 14px;
   margin: 0px 23px;
 }
 
-/* MUI Autocomplete Padding */
-.MuiAutocomplete-hasPopupIcon.MuiAutocomplete-hasClearIcon.css-1j0qgw8-MuiAutocomplete-root .MuiOutlinedInput-root {
-  padding-right: 45px !important;
-}
+
 
 /* Glass Morphism Footer */
 .glass-morphism-footer {
@@ -1413,7 +1424,9 @@ $scrollbar-border-radius: 14px;
   .MuiSelect-icon {
     color: rgba(255, 255, 255, 0.7) !important;
   }
-
+.MuiInputBase-input.MuiOutlinedInput-input {
+     height: 2px; 
+}
   // Autocomplete dropdown styling
   .MuiAutocomplete-popupIndicator {
     color: rgba(255, 255, 255, 0.7) !important;
@@ -2249,6 +2262,12 @@ $scrollbar-border-radius: 14px;
     // background-color: #1e1e2f;
     // z-index: 1040;
   }
+  .knowledge_assist_height{
+  height: 81vh;
+  }
+  .prb_ticket_height{
+    height : 20vh
+  }
 }
 
 // @media (min-width: 768px) {
@@ -2299,12 +2318,11 @@ $scrollbar-border-radius: 14px;
 
   .ISTMAssit {
     padding: 0.8rem;
-    height: 13.1rem;
     font-size: 9px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 58vh;
   }
 
   .header_logo {
@@ -2352,8 +2370,6 @@ $scrollbar-border-radius: 14px;
 
   .ISTMAssit {
     padding: 1rem;
-    overflow: scroll;
-    height: 14.4rem;
     font-weight: 600;
     font-size: 11px;
     line-height: 10px;
@@ -2367,7 +2383,7 @@ $scrollbar-border-radius: 14px;
     background: linear-gradient(180deg,
         rgba(0, 119, 255, 0.1) 36.06%,
         rgba(0, 128, 248, 0.1) 100%);
-    height: 81vh;
+    height: 70vh;
   }
 
   .Istm-title {
@@ -2695,7 +2711,15 @@ $scrollbar-border-radius: 14px;
     border: none;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
   }
-}
+
+  .knowledge_assist_height{
+    height: 71vh;
+    }
+    .prb_ticket_height{
+      height : 20vh
+    }
+
+  }
 
 // ============================================
 //  Responsive (If any one want add responsive classes should add here only )
@@ -2767,12 +2791,11 @@ $scrollbar-border-radius: 14px;
 
     .ISTMAssit {
       padding: 0.8rem;
-      height: 13.1rem;
       font-size: 9px;
     }
 
     .tech_assist {
-      height: 70vh;
+      height: 58vh;
     }
 
     .header_logo {
@@ -2921,12 +2944,11 @@ $scrollbar-border-radius: 14px;
 
   .ISTMAssit {
     padding: 0.8rem;
-    height: 12.1rem;
     font-size: 11px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 67vh;
   }
 
   .css-14s5rfu-MuiFormLabel-root-MuiInputLabel-root {
@@ -2952,7 +2974,45 @@ $scrollbar-border-radius: 14px;
   }
 
   // }
+
+  .knowledge_assist_height{
+    height: 79vh;
+    }
+    .prb_ticket_height{
+      height : 20vh
+    }
+  }
+
+@media (min-width:1024px){
+  .knowledge_assist_height{
+    height: 76vh;
+    }  
+    .tech_assist {
+      height: 63vh;
+    }
+    .itsm_pannel {
+      height: 75vh;
+    }
+    .prb_ticket_height{
+      height : 75vh
+    }
+  }
+@media (min-width:1163px){
+  .knowledge_assist_height{
+    height: 79vh;
+    }  
+    
+  .tech_assist {
+    height: 67vh;
+  }
+  .itsm_pannel {
+    height: 78vh;
+  }
+  .prb_ticket_height{
+    height : 78vh
+  }
 }
+
 
 /* ---------------------------------------------
    Extra Large Devices (≥1200px)
@@ -2976,7 +3036,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .itsm_pannel {
-    height: 81vh;
+    height: 80vh;
   }
 
   .knowledge_assist {
@@ -2984,7 +3044,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 23.1rem;
     font-size: 11px;
   }
 
@@ -2993,7 +3052,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 70vh;
   }
 
   .seach_layout {
@@ -3037,7 +3096,13 @@ $scrollbar-border-radius: 14px;
   .chat_msg_box {
     font-size: 12px;
   }
-}
+  .knowledge_assist_height{
+    height: 81vh;
+    }
+    .prb_ticket_height{
+      height : 79vh
+    }
+  }
 
 /* ---------------------------------------------
    Extra Extra Large Devices (≥1400px)
@@ -3053,7 +3118,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .itsm_pannel {
-    height: 81vh;
+    height: 83vh;
   }
 
   .knowledge_assist {
@@ -3066,7 +3131,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 15.7rem;
     font-size: 13px;
   }
 
@@ -3181,7 +3245,7 @@ $scrollbar-border-radius: 14px;
     }
 
     .itsm_pannel {
-      height: 81vh;
+      height: 80vh;
     }
 
     .knowledge_assist {
@@ -3189,7 +3253,6 @@ $scrollbar-border-radius: 14px;
     }
 
     .ISTMAssit {
-      height: 15.1rem;
       font-size: 11px;
     }
 
@@ -3198,7 +3261,7 @@ $scrollbar-border-radius: 14px;
     }
 
     .tech_assist {
-      height: 73vh;
+      height: 70vh;
     }
 
     .seach_layout {
@@ -3257,7 +3320,7 @@ $scrollbar-border-radius: 14px;
     }
 
     .itsm_pannel {
-      height: 81vh;
+      height: 83vh;
     }
 
     .knowledge_assist {
@@ -3270,7 +3333,6 @@ $scrollbar-border-radius: 14px;
     }
 
     .ISTMAssit {
-      height: 15.7rem;
       font-size: 13px;
     }
 
@@ -3348,8 +3410,30 @@ $scrollbar-border-radius: 14px;
       height: 24.3rem;
     }
   }
-}
 
+  .knowledge_assist_height{
+    height: 83vh;
+    }
+    .prb_ticket_height{
+      height : 82vh
+    }
+  }
+
+
+@media (min-width: 1600px){
+  .knowledge_assist_height{
+    height: 85vh;
+    }
+    .tech_assist {
+      height: 76vh;
+    }
+    .itsm_pannel {
+      height: 84vh;
+    }
+    .prb_ticket_height{
+      height : 84vh
+    }
+}
 /* ---------------------------------------------
    Ultra-Wide Screens (≥1920px)
 --------------------------------------------- */
@@ -3381,7 +3465,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .itsm_pannel {
-    height: 81vh !important;
+    height: 86vh;
   }
 
   .knowledge_assist {
@@ -3391,7 +3475,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 25rem !important;
     font-size: 14px;
   }
 
@@ -3401,7 +3484,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 80vh;
   }
 
   .prompt_engine {
@@ -3463,7 +3546,13 @@ $scrollbar-border-radius: 14px;
   .table_height .MuiTableContainer-root {
     height: 75vh;
   }
-}
+  .knowledge_assist_height{
+    height: 87vh;
+    }
+    .prb_ticket_height{
+      height : 87vh
+    }
+  }
 
 @media (min-width: 2560px) {
   .text-big {
@@ -3498,9 +3587,6 @@ $scrollbar-border-radius: 14px;
     font-size: 2.5rem;
   }
 
-  .itsm_pannel {
-    height: 81vh !important;
-  }
 
   .knowledge_assist {
     height: 81vh !important;
@@ -3509,7 +3595,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 28.5rem !important;
     font-size: 25px;
   }
 
@@ -3519,7 +3604,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 78vh;
   }
 
   .header_bachground {
@@ -3614,7 +3699,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .itsm_pannel {
-    height: 81vh !important;
+    height: 84vh ;
   }
 
   .knowledge_assist {
@@ -3624,7 +3709,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 26.7rem !important;
     font-size: 14px;
   }
 
@@ -3634,7 +3718,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 78vh;
   }
 
   .header_bachground {
@@ -3668,7 +3752,13 @@ $scrollbar-border-radius: 14px;
   .bot_assist {
     height: 26.7rem;
   }
-}
+  .knowledge_assist_height{
+    height: 85vh;
+    }
+    .prb_ticket_height{
+      height : 88vh
+    }
+  }
 
 @media (min-width: 2560px) {
   .text-big {
@@ -3703,9 +3793,6 @@ $scrollbar-border-radius: 14px;
     font-size: 2.5rem;
   }
 
-  .itsm_pannel {
-    height: 81vh !important;
-  }
 
   .knowledge_assist {
     height: 81vh !important;
@@ -3714,7 +3801,6 @@ $scrollbar-border-radius: 14px;
   }
 
   .ISTMAssit {
-    height: 70vh !important;
     font-size: 25px;
   }
 
@@ -3724,7 +3810,7 @@ $scrollbar-border-radius: 14px;
   }
 
   .tech_assist {
-    height: 73vh;
+    height: 78vh;
   }
 
   .header_bachground {
@@ -3844,6 +3930,23 @@ $scrollbar-border-radius: 14px;
     height: 49.7rem;
   }
 }
+
+/* 4K screens: 3840px and up */
+@media (min-width: 3840px) {
+  .knowledge_assist_height {
+    height: 90vh;
+  }
+  .tech_assist {
+    height: 85vh;
+  }
+  .itsm_pannel {
+    height: 90vh;
+  }
+  .prb_ticket_height{
+    height : 92vh
+  }
+}
+
 
 .typing-loader {
   display: inline-block;
@@ -4288,11 +4391,6 @@ $scrollbar-border-radius: 14px;
   color: white !important;
 }
 
-.itsm_dropdown-menu {
-  left: -9px !important;
-  top: 9px !important;
-  //  background: red; 
-}
 
 .MuiMenu-list {
   background-color: rgb(2 79 148 / 29%) !important;
@@ -4341,6 +4439,114 @@ custom-close .btn-close {
 .modal-backdrop.glass-bg {
   background-color: rgba(255, 255, 255, 0.025);
   /* Change this to your desired color */
+}
+.scrollable-accordion {
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  /* Firefox */
+  -ms-overflow-style: none;
+
+  /* Internet Explorer 10+ */
+  &::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Edge */
+  }
+  
+// .MuiAutocomplete-root {
+//   .MuiOutlinedInput-root {
+//     padding: 2px 0px 2px 0px !important;
+// }
+//}
+.MuiFormLabel-root-MuiInputLabel-root {
+  top: -5px!important;
+}
+
+/* MUI Autocomplete Padding */
+.MuiAutocomplete-hasPopupIcon.MuiAutocomplete-hasClearIcon.css-1j0qgw8-MuiAutocomplete-root .MuiOutlinedInput-root {
+  padding-right: 24px !important;
+}
+
+.MuiOutlinedInput-input.Mui-disabled {
+  padding: 5px 0px 4px 9px !important;
+}
+}
+
+.quantum-loader {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  background: rgb(0 0 0 / 72%);
+  overflow: hidden;
+}
+
+.bar {
+  width: 6px;
+  height: 40px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 0 15px #00e0ff;
+  animation: quantumPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes quantumPulse {
+  0%, 100% {
+    transform: scaleY(0.3);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.model_header{
+  padding: 10px!important;
+}
+// .quiz{
+  .modal-header {
+    border-bottom: none !important;
+  }
+  .modal-footer {
+    border-top: none !important;
+  }
+// }
+  .custom-modal-title {
+   font-size: 0.875rem;
+  font-weight: 900; /* optional */
+  // padding: 10px!important;
+  h5{
+    font-size: 0.875rem;
+  font-weight: 900; 
+  }
+  :first-child {
+    font-size: 0.75rem;
+  font-weight: 900; 
+  }
+}
+.modal-header .btn-close {
+  filter: invert(1);
+  font-size: 10px;
+}
+
+.knowledge_card_title {
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.knowledge_card_p {
+  font-size: 0.75rem;
+}
+
+.rendered-html a {
+  color: white !important;
+}
+
+.rendered-html a:hover {
+  color: #ddd !important;
 }
 
 

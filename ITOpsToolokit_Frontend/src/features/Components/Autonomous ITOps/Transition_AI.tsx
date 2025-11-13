@@ -10,17 +10,17 @@ import { useNavigate } from 'react-router-dom';
 const Transition_AI: React.FC = () => {
   const cardsData = [
     {
-      title: "Knowledge Assist",
+      title: "Knowledge AI",
       text: "Intelligent IT operations with automated incident response, service management, and knowledge assistance",
       icon: faChartArea, // Replace with your icon path or SVG
-      link: "/knowledge-assist",
+      link: "/transition-ai/knowledge-ai",
       link_paht: "Explore ITOps",
     },
     {
-      title: "Train Assist",
+      title: "Train AI",
       text: "Advanced data analytics, machine learning, and business intelligence",
       icon: faChartLine, // Replace with your icon path or SVG
-      link: "/TrainAssist",
+      link: "/transition-ai/train-ai",
       link_paht: "Explore Analytics",
     }
     

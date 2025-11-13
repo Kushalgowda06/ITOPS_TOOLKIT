@@ -1,6 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-export default function TicketDetails({ ticket, setSelectedTicket, setIncidentNumbers }) {
+export default function TicketDetails({ ticket, setSelectedTicket, setIncidentNumbers, state }) {
   function generateUniqueId(incident: string): string {
     // Simple hash using incident + timestamp
     const timestamp = Date.now();
@@ -70,7 +70,7 @@ export default function TicketDetails({ ticket, setSelectedTicket, setIncidentNu
           <input
             type="text"
             className="prb_ticket-input flex-grow-1"
-            value={ticket["approval_status"] || ''}
+            value ={ticket["state"] ? state.find((s) => s.value === String(ticket.state))?.label : ticket["approval_status"] }
             onChange={e => handleChange("approval_status", e.target.value)}
           />
         </div>

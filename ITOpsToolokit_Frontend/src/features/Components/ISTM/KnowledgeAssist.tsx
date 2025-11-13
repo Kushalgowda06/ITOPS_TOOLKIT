@@ -229,7 +229,6 @@ const KnowledgeAssist = ({ selectedTicket }) => {
     impactOptions[parseInt(getFieldValue(num)) - 1] || "";
   const mapImpactLabelToNumber = (label) => label.split(" ")[0];
 
-  
   return (
     <div className="custom-container rounded-top shadow-lg text-white rounded-bottom" style={{maxHeight: "70%"}}>
       <HeaderBar
@@ -248,7 +247,7 @@ const KnowledgeAssist = ({ selectedTicket }) => {
           </div>
         </div>
       ) : (
-        <div className="overflow-auto" style={{height: "81vh"}}>
+        <div className="overflow-auto knowledge_assist_height" >
           <div className="d-flex flex-column align-items-center ms-2 mt-1 ">
             <span className="small">
               <strong className="card_title">{selectedTicket?.number}</strong>
