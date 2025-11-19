@@ -28,6 +28,7 @@ async def health_check():
 # Replace with your actual frontend origin
 origins = [
         "http://localhost:3000",
+        "http://3.6.96.101:8200/",
         "https://172.31.31.74:3000/",
         "http://172.31.31.74:3000/",
         "http://13.232.145.5:3000/",
