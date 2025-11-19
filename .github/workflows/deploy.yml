@@ -25,17 +25,12 @@ jobs:
 
       - name: Create ECR repositories
         run: |
-          aws ecr create-repository --repository-name itops-vault --region ap-southeast-1 || true
           aws ecr create-repository --repository-name itops-postgres --region ap-southeast-1 || true
           aws ecr create-repository --repository-name itops-backend --region ap-southeast-1 || true
           aws ecr create-repository --repository-name itops-frontend --region ap-southeast-1 || true
 
       - name: Build and push images
         run: |
-          # Build and push Vault
-          docker build -t 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-vault:latest ./ITOpsToolokit_Backend/vault_setup
-          docker push 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-vault:latest
-
           # Build and push Postgres
           docker build -t 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-postgres:latest ./ITOpsToolokit_Backend/db_setup
           docker push 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-postgres:latest
@@ -75,19 +70,24 @@ jobs:
             sudo docker rm $(sudo docker ps -aq) 2>/dev/null || true
             sudo docker system prune -f
 
+            # Remove old volumes
+            sudo docker volume rm postgres-data 2>/dev/null || true
+
             # Create network
             sudo docker network create itops-network 2>/dev/null || true
 
-            # Pull and run Vault
-            sudo docker pull 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-vault:latest
+            # Pull and run Vault (using official image in dev mode)
             sudo docker run -d --name itops-vault --network itops-network -p 8200:8200 \
-              -e VAULT_DEV_ROOT_TOKEN_ID=root -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 \
-              --cap-add IPC_LOCK 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-vault:latest
+              -e VAULT_DEV_ROOT_TOKEN_ID=root \
+              -e VAULT_DEV_LISTEN_ADDRESS=0.0.0.0:8200 \
+              --cap-add IPC_LOCK \
+              hashicorp/vault:1.14.3
 
             # Pull and run Postgres
             sudo docker pull 361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-postgres:latest
             sudo docker run -d --name itops-postgres --network itops-network -p 5432:5432 \
               -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=Postgres_2025 -e POSTGRES_DB=cfs_problem_tickets \
+              -v postgres-data:/var/lib/postgresql/data \
               361568250748.dkr.ecr.ap-southeast-1.amazonaws.com/itops-postgres:latest
 
             sleep 30
