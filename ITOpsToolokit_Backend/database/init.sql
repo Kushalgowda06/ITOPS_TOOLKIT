@@ -1,8 +1,9 @@
 -- Set postgres superuser password
 ALTER USER postgres WITH PASSWORD 'Postgres_2025';
 
--- Create application database (runs only on first init of the data dir)
-CREATE DATABASE cfs_problem_tickets;
+-- Create application database if not exists
+SELECT 'CREATE DATABASE cfs_problem_tickets'
+WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'cfs_problem_tickets')\gexec
 
 -- Create app role (cluster-wide)
 DO $$
