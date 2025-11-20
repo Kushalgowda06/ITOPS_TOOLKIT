@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci --only=production
 COPY . .
-RUN npm run build
+RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
 
 FROM nginx:alpine
 COPY --from=build /app/build /usr/share/nginx/html
