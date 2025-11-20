@@ -209,6 +209,7 @@ posthog
 pre_commit
 prompt_toolkit
 propcache
+python-decouple
 proto-plus
 protobuf
 psutil
