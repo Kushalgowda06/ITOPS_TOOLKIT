@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY fastapi_main_simple.py .
+COPY fastapi_main.py .
 
 EXPOSE 8000
 
