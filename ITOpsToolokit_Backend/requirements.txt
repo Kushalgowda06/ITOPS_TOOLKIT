@@ -237,6 +237,7 @@ python-docx
 python-dotenv
 python-pptx
 pytz
+PyJWT
 pywinrm
 pyxlsb
 PyYAML
