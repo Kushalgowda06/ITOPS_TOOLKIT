@@ -2,7 +2,9 @@ import os
 
 import json
 from .itsm_connector import ITSM
-from langchain.schema import Document
+#from langchain.schema import Document
+from langchain_core.documents import Document
+
 from .kb_manager import KBManager
 
 from .change_assistant import ChangeAssistant
