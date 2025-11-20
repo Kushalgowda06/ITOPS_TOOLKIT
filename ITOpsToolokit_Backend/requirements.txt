@@ -188,7 +188,7 @@ opentelemetry-exporter-otlp-proto-grpc==1.27.0
 opentelemetry-instrumentation==0.48b0
 opentelemetry-instrumentation-asgi==0.48b0
 opentelemetry-instrumentation-fastapi==0.48b0
-opentelemetry-proto==1.27.0
+opentelemetry-proto==1.28.2
 opentelemetry-sdk==1.27.0
 opentelemetry-semantic-conventions==0.48b0
 opentelemetry-util-http==0.48b0
@@ -209,7 +209,7 @@ pre_commit==4.2.0
 prompt_toolkit==3.0.48
 propcache==0.2.1
 proto-plus==1.26.0
-protobuf==5.29.3
+protobuf==4.25.5
 psutil==7.0.0
 psycopg==3.2.4
 psycopg-binary==3.2.4
