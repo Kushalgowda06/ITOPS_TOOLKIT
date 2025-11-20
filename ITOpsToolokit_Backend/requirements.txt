@@ -60,6 +60,7 @@ docx2txt
 durationpy
 easygui
 ebcdic
+email-validator
 et_xmlfile
 eval_type_backport
 executing
