@@ -1,0 +1,86 @@
+{
+        "vault_url": "http://172.31.14.219:8200",
+        "snow_tag": "Platform_SNOW",
+        "snow_url": "https://cisicmpengineering1.service-now.com",
+	"modules": {
+		"Tech Buddy": 1,
+		"Change Assist": 1,
+		"Problem Assist": 1,
+		"Analytics AI": 1,
+		"Call Audit": 1,
+		"Ticket Audit": 1,
+		"Voice AI": 1,
+		"Recruit Assist": 1,
+		"Workflow Test Tool": 1
+	},
+    	"pg_db_host": "172.31.9.30",
+	"pg_db_name": "cfs_problem_tickets",
+	"kb_similarity_threshold_score": 0.65,
+        "agents": {
+                "OS Agents": {
+                        "Linux Agent": {
+                                "Check host reachability": "Is host ____ reachable?",
+				"Check port connectivity for the host": "Is port ____ open for host ____?",
+				"Trace the route to the host": "Check if there are any obstructions in reaching to the host ____. Try with maximum ____ hops.",
+                                "Check service status": "Is service ____ running for Linux host ____?",
+				"File system details": "Check the file system details on Linux host ____",
+                                "Start service": "Start service ____ on Linux host ____.",
+				"Run command": "Run the following command - ' ____ ' on the Linux host ____ and provide the result.",
+				"List the running process": "List out the running process on the Linux host ____.",
+				"Top 50 processes": " List top 50 processes based on CPU consumption on linux host ____.",
+				"List all services": "List all linux services and their state on Linux host ____.", 
+				"Check 25 recent logs": "Check 25 recent logs on the Linux host ____.",
+				"Management information": "Retrieve management information from the Linux host ____"
+                        },
+			"Windows Agent": {
+                                "Check host reachability": "Is host ____ reachable?",
+                                "Check port connectivity for the host": "Is port ____ open for host ____?",
+
+				"Trace the route to the host": "Check if there are any obstructions in reaching to the host ____. Try with maximum ____ hops.",
+				"Check service status": "Is service ____ running for Windows host ____? You need not overthink or check any pre-requisites to run this action.",
+				"Start service": "Start service ____ on windows host ____.",
+				"Run batch script": "Trigger Windows batch script at path ____ on host ____.",
+				"Check process status": "Check the status of the process PID = ____ on host ____.",
+				"List the running process": "List out the running process on the host ____.",
+				"Terminate the running process": "Terminate the process on the host ____ were pid is ____",
+				"Audit policies": "Display audit policies running on host ____",
+				"CPU Consumption": "Display top 5 Cpu consuming processes running on host ____",
+				"Network diagnostics": "Provide detail network diagnosis on host ____",
+				"Directory attributes": "List files and directories with detail attributes running on host ____",
+				"Disk names": "Display disks mounted on host ____",
+				"Get Screen Timeout": "Get the screen timeout from the host ____",
+				"Set Screen Timeout": "Set the screen timeout to ____ mins for windows host ____"
+			}
+                },
+		"Web Agents": {
+			"URL Health": {
+				"Get response code for URL": "What is the HTTP response code for URL ____?",
+				"Certificate validation": "How many days are remaining for certificate expiry for URL ____?"
+			}
+		},
+		"Docker Agents": {
+			"Container Health": {
+				"Check container status": "Is container ____ running on host ____?",
+				"Start container": "Start container ____ on linux host ____."
+			}
+		},
+		"Microsoft App Agents": {
+			"One Drive": {
+				"Get device ID": "Provide device ID tagged to user ____",
+				"Repair One Drive": "Repair One Drive for device ID ____."
+			}
+		},
+		"RabbitMQ Agents": {
+			"Queues": {
+				"Get messages count": "Get the message count on RabbitMQ queue running on the host ____",
+				"Purge Queue": "Purge RabbitMQ queue ____ on the host ____"
+			}
+		},
+		"Security Agents": {
+			"CrowdStrike": {
+				"Get VT score": "Get virus total score for hash ____/",
+				"Onboard Hash to Crowdstrike": "Please add hash ____ to crowdstrike with type ____. Purpose - ____."
+			}
+		}
+        }
+}

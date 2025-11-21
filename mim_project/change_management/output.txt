@@ -1,0 +1,65 @@
+[
+   {
+      "short_description": "Stop Resource Manager and Zenoss service daemons on CCM UI",
+      "description": "Resource manager and Zenoss service daemons will be stopped on CCM UI.",
+      "ci": "CCM UI",
+      "duration_in_mins": 10,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Stop serviced and docker on control center server",
+      "description": "Serviced and docker will be stopped in control center server.",
+      "ci": "Control Center Server",
+      "duration_in_mins": 15,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Upgrade docker service to latest version",
+      "description": "Docker service will be upgraded to the latest version.",
+      "ci": "Docker",
+      "duration_in_mins": 20,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Upgrade serviced version and do clean restart",
+      "description": "Upgrade serviced version from 1.9.1 to 1.10.2 and do a clean restart keeping RM services in stopped state.",
+      "ci": "Serviced",
+      "duration_in_mins": 25,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Perform application backup restore on Master server",
+      "description": "Perform Application backup restore on Master server for retaining RM Application template.",
+      "ci": "Master Server",
+      "duration_in_mins": 30,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Add Hosts in Control Center UI and authenticate",
+      "description": "Add Hosts in Control Center UI and authenticate.",
+      "ci": "Control Center UI",
+      "duration_in_mins": 15,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Upgrade Resource Manager on Control Centre Master Host",
+      "description": "Upgrade Resource Manager from 6.6.0 to 6.7.0 on Control Center Master Host.",
+      "ci": "Control Centre Master Host",
+      "duration_in_mins": 40,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Verify RM and Collector application services status",
+      "description": "Verify if all RM and Collector application services are up and running.",
+      "ci": "Application Services",
+      "duration_in_mins": 20,
+      "assignment_group": "DWP Operations Center"
+   },
+   {
+      "short_description": "Verify Data Collection and Ticketing in Console and SNOW",
+      "description": "Data Collection and Ticketing will be verified in Console and SNOW.",
+      "ci": "Console and SNOW",
+      "duration_in_mins": 15,
+      "assignment_group": "DWP Operations Center"
+   }
+]

@@ -1,0 +1,9 @@
+Change applicable for -
+1. Service restart
+2. Server reboot
+3. Configuration modifications
+
+Change not applicable for -
+1. Any diagnostic actions those just retrieve data
+2. Starting anything that is already stopped
+3. Any activity asking for suggestions and not the actual changes

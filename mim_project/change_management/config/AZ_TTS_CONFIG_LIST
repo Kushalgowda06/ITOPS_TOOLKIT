@@ -1,0 +1,9 @@
+[
+  {
+    "model": "gpt-4o-mini-tts",
+    "api_type": "azure",
+    "base_url": "https://aicloudops.cognitiveservices.azure.com/openai/deployments/gpt-4o-mini-tts/audio/speech",
+    "api_key": "G7OGuf8RFtDHSwd8NSlrnQitylpJaJBJ5uyRcWbcbdRohWlNsAj2JQQJ99BDACHYHv6XJ3w3AAAAACOGGFbm",
+    "api_version": "2025-03-01-preview"
+  }
+]

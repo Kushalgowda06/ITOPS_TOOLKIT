@@ -1,0 +1,9 @@
+[
+  {
+    "model" : "dall-e-3",
+    "base_url": "https://aifrontend.cognitiveservices.azure.com",
+    "api_key" : "9EZNl4DNfRz8hYDG22c1oqd0wtZcJmLMV8Y2DAOkHWux30G8YVl6JQQJ99AKACYeBjFXJ3w3AAAAACOG1duV",
+    "api_type" : "azure",
+    "api_version": "2024-02-01"
+  }
+]

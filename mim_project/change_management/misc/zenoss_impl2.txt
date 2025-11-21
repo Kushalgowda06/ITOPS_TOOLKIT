@@ -1,0 +1,262 @@
+----------------------------------------------------PRE-REQUISTIES FOR UPGRADE-----------------------------------------------------------------------------
+
+1. Runtoolbox
+2. Download the files and give permissions and move to tmp folder
+3. Enable Key based authentication from CCM to RP's
+
+--------------------------------------------------TAKE AMI BACKUP BEFORE UPGRADE---------------------------------------------------------------------------
+
+1. systemctl stop serviced
+2. sysemctl stop docker
+3. systemctl stop nfs.server-service
+
+4. AWS team to take AMI backup for CCM and RP servers ---- CISPEAWSSupport@cognizant.com
+
+5. systemctl start serviced
+6. systemctl start docker
+7. systemctl start nfs
+
+Verify if all services up and running fine. 
+
+-----------------------------------------------------------UPGRADE------------------------------------------------------------------------------------------
+
+->systemctl stop serviced 
+->systemctl stop docker nfs
+->systemctl disable serviced docker 
+
+<To check if old-mirror files are present>
+8. yum list --disablerepo=* | awk '/^yum-mirror/ { print $1}' 
+
+<Remove the mirror.Replace Old-Mirror with the name of the Zenoss repository mirror returned in the previous substep>
+9.yum remove yum-mirror.x86_64
+
+<Install the repository mirror><Mention the path where upgrade files are downloaded>
+10. yum install /tmp/yum-mirror*
+
+<move the serviced file to Zenoss repo mirror path>
+11. mv /tmp/serviced-1.10.2-1.x86_64.rpm /opt/zenoss-repo-mirror/
+
+12. systemctl enable serviced
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+<Dismount all filesystems mounted from the "Control Center master host.""This step ensures no stale mounts remain when the storage on the master host is replaced.>
+13. awk '/serviced/ { print $1, $2 }' < /proc/mounts | grep -v '/opt/serviced/var/isvcs'
+
+
+<If the preceding command returns no result, stop. This procedure is complete.If the preceding command returns a result, perform the following substeps to dismount>
+14.
+
+ for FS in $(awk '/serviced/ { print $2 }' < /proc/mounts \
+ | grep -v '/opt/serviced/var/isvcs')
+do
+ umount -f $FS
+done
+
+<If the mount point is not removed proceed with step 15 to 21 else proceed from step 22>
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Identify filesystems mounted from the master host.
+15.awk '/serviced/ { print $1, $2 }' < /proc/mounts \
+ | grep -v '/opt/serviced/var/isvcs'
+If the preceding command returns no result, stop. This procedure is complete.
+If the preceding command returns a result, perform the following substeps.
+Perform a lazy dismount.
+
+16.for FS in $(awk '/serviced/ { print $2 }' < /proc/mounts \
+ | grep -v '/opt/serviced/var/isvcs')
+do
+ umount -f -l $FS
+done
+
+Restart the NFS service.
+17.systemctl restart nfs
+
+Determine whether any filesystems remain mounted from the master host.
+18.awk '/serviced/ { print $1, $2 }' < /proc/mounts \
+ | grep -v '/opt/serviced/var/isvcs'
+
+If the preceding command returns no result, stop. This procedure is complete.
+If the preceding command returns a result, perform the remaining substeps.
+Disable the automatic startup of serviced.
+
+19.systemctl disable serviced
+
+<Reboot the host.>
+20.reboot
+
+<Log in to the delegate host as root, or as a user with superuser privileges.
+Enable the automatic startup of serviced>
+21.systemctl enable serviced
+
+------------------------------------------------------------DOCKER UPGRADE-------------------------------------------------------------------------------
+
+<Remove the Docker repository description file, if present>
+22. rm -f /etc/yum.repos.d/docker.repo
+
+<Remove without checking dependencies>
+23. rpm -e --nodeps docker-ce
+
+<installation of latest docker version>
+24. cd /opt/zenoss-repo-mirror
+25. ll | grep docker
+26. yum install --enablerepo=zenoss-mirror <replace the docker filename returned from above output>
+
+<Move the old docker file to tmp>
+27. mv /etc/sysconfig/docker /tmp/
+
+<Create a systemd drop-in file for Docker.>
+28. mkdir -p /etc/systemd/system/docker.service.d
+
+<Create the unit drop-in file.>
+29.
+cat <<EOF > /etc/systemd/system/docker.service.d/docker.conf
+[Service]
+TimeoutSec=300
+EOF
+
+<configure new docker config file in json format>
+30. vi /etc/docker/daemon.json
+
+<Add the below configurations in the json file created>
+
+31. 
+{
+  "bip": "172.17.0.1/16",
+  "dns": [
+    "172.17.0.1"
+  ],
+  "exec-opts": [
+    "native.cgroupdriver=cgroupfs"
+  ],
+  "log-level": "error",
+  "storage-driver": "devicemapper",
+  "storage-opts": [
+    "dm.mountopt=discard",
+    "dm.thinpooldev=/dev/mapper/docker-docker--pool"
+  ],
+  "insecure-registries" : ["Replace with CCM IP:5000"]
+}
+
+<reload and restart docker daemon>
+32. systemctl daemon-reload
+33. systemctl restart docker
+
+<Move the old docker file back to /etc/sysconfig/ from tmp folder>
+34. mv /tmp/docker /etc/sysconfig/
+
+<Verify docker status>
+35. systemctl status docker
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+<Remove a previous workaround for an NFS rpcbind issue, Remove the NFS service drop-in file, if it exists.>
+
+36. test -f /etc/systemd/system/nfs-server.service.d/nfs-server.conf && rm -f /etc/systemd/system/nfs-server.service.d/nfs-server.conf
+
+<if no output is returned, proceed to next step>
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+<Loading image files from path where zenoss upgrade files are downloaded for ex:/tmp>
+Use this procedure to load images into the local Docker registry on a host.
+
+37. 
+
+for image in install-zenoss-*.run
+do
+ /bin/echo -en "\nLoading $image..."
+ yes | ./$image
+done
+
+-----------------------------------------------------------------SERVICED UPGRADE---------------------------------------------------------------------------
+
+<Keep the pre-ugrade service file backup>
+38. cp /etc/default/serviced /etc/default/serviced-pre-1.10.2
+
+<Set the read-only permission to backup file>
+39. chmod 0440 /etc/default/serviced-pre-1.10.2
+
+<Install the serviced>
+40. cd /opt/zenoss-repo-mirror
+41. ll | grep serviced
+42. yum install --enablerepo=zenoss-mirror <serviced file name returned from above command>
+
+<If serviced upgrade fails, set the python version to 2- use the below command> and try upgrading serviced again steps(42).
+
+43. alternatives --set python /usr/bin/python2
+
+<Take the backup of raw serviced file before doing changes>
+44. cp /etc/default/serviced /etc/default/serviced-1.10.2-orig
+
+<Set the read-only permissions to the serviced raw file>
+45. chmod 0440 /etc/default/serviced-1.10.2-orig
+
+<Copy the pre-upgrade serviced configurations to new serviced file>
+46. cp /etc/default/serviced-pre-1.10.2 /etc/default/serviced
+
+<Reload the daemon>
+47. systemctl daemon-reload
+
+<start serviced service>
+48. systemctl start serviced
+
+<Restart services>
+
+49.
+systemctl stop serviced
+systemctl stop docker 
+systemctl stop nfs-server.service
+systemctl start nfs-server.service
+systemctl start docker
+docker rm $(docker ps -qa)
+systemctl start serviced
+
+<check the zookeeper connections. use CCM IP and execute on CCM server, use RP IP and execute in respective RP server>
+50. { echo stats; sleep 1; } | nc 10.121.49.160 2181 | grep Mode
+
+-------------------------------------------------------------SLOR REINDEXING-----------------------------------------------------------------------------
+
+51. serviced service stop Solr
+52. cd /opt/serviced/var/volumes/<tenant id>
+53. mkdir /tmp/solr-backup
+54. mv solr* /tmp/solr-backup
+55. mv .solr* /tmp/solr-backup
+56. serviced service start Solr
+
+<Stop all services except those under Infrastructure and zenventserver>
+
+57.serviced service shell -i zope bash
+58.su - zenoss
+59.zencatalog run --createcatalog --forceindex --workers=4 
+<Worker numbers can be increased based on the no of workers used in Instance and the number of devices present in console>
+
+
+--------------------------------------------PRE-REQUISTIES BEFORE UPGRADING RM VERSION-------------------------------------------------------------------
+
+-> If all hosts(CCM/RP) are up and authenticated in Control Center UI page
+
+-> Check and remove snapshots if any
+   serviced snapshot list
+   serviced snapshot rm <snapshot name>
+
+-> check and remove orphan devices if any
+   serviced-storage -o dm.thinpooldev=/dev/mapper/serviced-serviced--pool check /opt/serviced/var/volumes
+   <if orphan device is present then execute the below>
+   serviced-storage -o dm.thinpooldev=/dev/mapper/serviced-serviced--pool check -c /opt/serviced/var/volumes
+
+-> Trim the serviced volume 
+   fstrim -v <volumeID>
+
+-> make sure RM services are in stopped state from front end
+
+-> make sure serviced docker nfs running on CCM and RP's from backend
+
+
+--------------------------------------------------------RM UPGRADE----------------------------------------------------------------------------------------
+
+60.  docker run -it --rm -v /root:/mnt/root zenoss/resmgr_6.7:6.7.0_1 rsync -a /root/6.7.x /mnt/root 
+
+61.  /root/6.7.x/upgrade-resmgr.sh
+
+
+
+
+

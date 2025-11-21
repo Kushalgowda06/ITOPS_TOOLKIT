@@ -1,0 +1,6 @@
+{
+        "vault_url": "http://172.31.14.219:8200",
+        "pg_db_host": "172.31.9.30",
+        "pg_db_name": "train_assist",
+        "pg_db_port": "5432"
+}
