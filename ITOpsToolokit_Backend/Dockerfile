@@ -23,6 +23,7 @@ WORKDIR /app
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y \
     libpq5 \
+    libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy installed packages from builder
