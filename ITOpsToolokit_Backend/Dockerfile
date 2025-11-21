@@ -27,7 +27,8 @@ RUN pip install --no-cache-dir \
     uvicorn==0.34.0 \
     hvac==2.3.0 \
     requests==2.32.3 \
-    pydantic==2.9.0
+    pydantic==2.9.0 \
+    email-validator
 
 RUN mkdir -p /app/config && echo "placeholder" > /app/config/.vault_token
 
